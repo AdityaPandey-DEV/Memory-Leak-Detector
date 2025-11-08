@@ -163,6 +163,7 @@ function performAnalysis(code) {
             
             // Extract size - handle various patterns
             let size = 1;
+            let bytesPerElement = 1;
             
             // First, try to extract from the function call arguments
             const funcCallMatch = trimmed.match(/(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/);
@@ -173,43 +174,51 @@ function performAnalysis(code) {
                 const callocMatch = args.match(/(\d+)\s*,\s*(\d+)/);
                 if (callocMatch) {
                     size = (parseInt(callocMatch[1]) || 1) * (parseInt(callocMatch[2]) || 1);
+                    bytesPerElement = 1; // calloc already gives total bytes
                 } else {
-                    // Handle sizeof patterns
-                    const sizeofPatterns = [
-                        /sizeof\s*\([^)]+\)\s*\*\s*(\d+)/,      // sizeof(type) * n
-                        /(\d+)\s*\*\s*sizeof\s*\([^)]+\)/,      // n * sizeof(type)
-                        /(\d+)\s*\*\s*sizeof/,                   // n * sizeof
-                    ];
+                    // Handle sizeof patterns: n * sizeof(type) or sizeof(type) * n
+                    const sizeofPattern1 = args.match(/(\d+)\s*\*\s*sizeof\s*\([^)]+\)/);  // n * sizeof(type)
+                    const sizeofPattern2 = args.match(/sizeof\s*\([^)]+\)\s*\*\s*(\d+)/);   // sizeof(type) * n
                     
-                    let found = false;
-                    for (const pattern of sizeofPatterns) {
-                        const match = args.match(pattern);
-                        if (match) {
-                            size = parseInt(match[1]) || 1;
-                            found = true;
-                            break;
+                    if (sizeofPattern1) {
+                        // Pattern: 50 * sizeof(int)
+                        size = parseInt(sizeofPattern1[1]) || 1;
+                        // Detect type from sizeof argument
+                        const sizeofType = args.match(/sizeof\s*\(([^)]+)\)/);
+                        if (sizeofType) {
+                            const type = sizeofType[1].trim();
+                            if (type.includes('char')) bytesPerElement = 1;
+                            else if (type.includes('int') || type.includes('float')) bytesPerElement = 4;
+                            else if (type.includes('double') || type.includes('long long')) bytesPerElement = 8;
+                            else bytesPerElement = 4; // default
                         }
-                    }
-                    
-                    // If no sizeof pattern, just look for a number
-                    if (!found) {
+                    } else if (sizeofPattern2) {
+                        // Pattern: sizeof(int) * 50
+                        size = parseInt(sizeofPattern2[1]) || 1;
+                        const sizeofType = args.match(/sizeof\s*\(([^)]+)\)/);
+                        if (sizeofType) {
+                            const type = sizeofType[1].trim();
+                            if (type.includes('char')) bytesPerElement = 1;
+                            else if (type.includes('int') || type.includes('float')) bytesPerElement = 4;
+                            else if (type.includes('double') || type.includes('long long')) bytesPerElement = 8;
+                            else bytesPerElement = 4;
+                        }
+                    } else {
+                        // Direct number: malloc(64) or malloc(128)
                         const numMatch = args.match(/(\d+)/);
                         if (numMatch) {
                             size = parseInt(numMatch[1]) || 1;
+                            bytesPerElement = 1; // Direct number means bytes, not elements
                         }
                     }
                 }
             }
             
-            // Estimate bytes (4 bytes per element for int, 1 for char, etc.)
-            // Try to detect type from the line
-            let bytesPerElement = 4; // default
-            if (trimmed.includes('char') || trimmed.includes('unsigned char')) {
-                bytesPerElement = 1;
-            } else if (trimmed.includes('int') || trimmed.includes('float')) {
-                bytesPerElement = 4;
-            } else if (trimmed.includes('double') || trimmed.includes('long long')) {
-                bytesPerElement = 8;
+            // If bytesPerElement wasn't set (for direct number allocations), detect from type declaration
+            if (bytesPerElement === 1 && funcCallMatch && funcCallMatch[2] && !funcCallMatch[2].match(/sizeof/)) {
+                // This is a direct number allocation like malloc(64)
+                // For direct numbers, the number already represents bytes, so bytesPerElement stays 1
+                // But we can use type info for display purposes
             }
             
             const bytes = size * bytesPerElement;
