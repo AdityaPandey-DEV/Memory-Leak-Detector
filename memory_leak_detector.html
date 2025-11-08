@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLDA - Memory Leak Detector & Code Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .code-editor {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .stat-card {
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <h1 class="text-3xl font-bold">MLDA - Memory Leak Detector & Code Analyzer</h1>
+            <p class="text-blue-100 mt-1">Universal Memory Leak Detection and Code Analysis Tool</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Code Editor -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-gray-800">Code Editor</h2>
+                        <div class="flex gap-2">
+                            <button onclick="loadSampleCode()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
+                                Load Sample
+                            </button>
+                            <button onclick="analyzeCode()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                                Analyze Memory
+                            </button>
+                            <button onclick="clearEditor()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="codeEditor" class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none" 
+                              placeholder="Enter your C/C++ code here..."></textarea>
+                </div>
+            </div>
+
+            <!-- Right Column: Statistics Dashboard -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Memory Statistics</h2>
+                    
+                    <!-- Statistics Cards -->
+                    <div class="space-y-4">
+                        <div class="stat-card bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Allocations</span>
+                                <span id="totalAllocations" class="text-2xl font-bold text-blue-600">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Total Frees</span>
+                                <span id="totalFrees" class="text-2xl font-bold text-green-600">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Memory Leaks</span>
+                                <span id="memoryLeaks" class="text-2xl font-bold text-red-600">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Leaked Bytes</span>
+                                <span id="leakedBytes" class="text-2xl font-bold text-orange-600">0 B</span>
+                            </div>
+                        </div>
+                        <div class="stat-card bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Critical Issues</span>
+                                <span id="criticalIssues" class="text-2xl font-bold text-purple-600">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pie Chart -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">Memory Distribution</h3>
+                        <canvas id="memoryChart" class="w-full"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Reporting Tabs -->
+        <div class="mt-6 bg-white rounded-lg shadow-lg">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button onclick="switchTab('leaks')" class="tab-btn active px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                        Memory Leaks
+                    </button>
+                    <button onclick="switchTab('analysis')" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        Code Analysis
+                    </button>
+                    <button onclick="switchTab('timeline')" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        Memory Timeline
+                    </button>
+                    <button onclick="switchTab('recommendations')" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                        Recommendations
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Memory Leaks Tab -->
+            <div id="leaks-tab" class="tab-content active p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Detected Memory Leaks</h3>
+                <div id="leaksList" class="space-y-4">
+                    <p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>
+                </div>
+            </div>
+
+            <!-- Code Analysis Tab -->
+            <div id="analysis-tab" class="tab-content p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Code Analysis Report</h3>
+                <div id="analysisContent">
+                    <p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>
+                </div>
+            </div>
+
+            <!-- Memory Timeline Tab -->
+            <div id="timeline-tab" class="tab-content p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Memory Usage Timeline</h3>
+                <canvas id="timelineChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Recommendations Tab -->
+            <div id="recommendations-tab" class="tab-content p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Best Practices & Recommendations</h3>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <h4 class="font-semibold text-blue-800 mb-2">1. Always Free Allocated Memory</h4>
+                        <p class="text-gray-700">Ensure every malloc/calloc/realloc call has a corresponding free() call. Use tools like Valgrind to verify.</p>
+                    </div>
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <h4 class="font-semibold text-green-800 mb-2">2. Check for NULL Pointers</h4>
+                        <p class="text-gray-700">Always check if memory allocation succeeded before using the pointer. malloc() returns NULL on failure.</p>
+                    </div>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                        <h4 class="font-semibold text-yellow-800 mb-2">3. Use Safe String Functions</h4>
+                        <p class="text-gray-700">Prefer strncpy() over strcpy(), snprintf() over sprintf() to prevent buffer overflows.</p>
+                    </div>
+                    <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                        <h4 class="font-semibold text-purple-800 mb-2">4. Implement Proper Error Handling</h4>
+                        <p class="text-gray-700">Handle allocation failures gracefully. Clean up already allocated memory before returning on error.</p>
+                    </div>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <h4 class="font-semibold text-red-800 mb-2">5. Use Memory Debugging Tools</h4>
+                        <p class="text-gray-700">Leverage tools like Valgrind, AddressSanitizer, or Dr. Memory to detect leaks during development.</p>
+                    </div>
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded">
+                        <h4 class="font-semibold text-indigo-800 mb-2">6. Follow RAII Principles</h4>
+                        <p class="text-gray-700">In C++, use smart pointers (unique_ptr, shared_ptr) to automatically manage memory. In C, consider wrapper functions.</p>
+                    </div>
+                    <div class="bg-teal-50 border-l-4 border-teal-500 p-4 rounded">
+                        <h4 class="font-semibold text-teal-800 mb-2">7. Regular Code Reviews</h4>
+                        <p class="text-gray-700">Conduct thorough code reviews focusing on memory management patterns and potential leaks.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let memoryChart = null;
+        let timelineChart = null;
+        let currentAnalysis = null;
+
+        // Sample code with memory leaks
+        const sampleCode = `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void processData() {
+    char *buffer = (char*)malloc(100 * sizeof(char));
+    strcpy(buffer, "Sample data");
+    printf("%s\\n", buffer);
+    // Memory leak: buffer is not freed
+}
+
+int* createArray(int size) {
+    int *arr = (int*)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+        arr[i] = i * 2;
+    }
+    return arr;
+    // Memory leak: arr is returned but never freed by caller
+}
+
+void unsafeFunction() {
+    char *str = (char*)malloc(50);
+    strcpy(str, "Hello World");
+    // Memory leak: str is not freed
+    // Also unsafe: strcpy without bounds checking
+}
+
+int main() {
+    int *numbers = createArray(10);
+    
+    processData();
+    unsafeFunction();
+    
+    // numbers is never freed
+    
+    return 0;
+}`;
+
+        function loadSampleCode() {
+            document.getElementById('codeEditor').value = sampleCode;
+        }
+
+        function clearEditor() {
+            document.getElementById('codeEditor').value = '';
+            resetDashboard();
+        }
+
+        function resetDashboard() {
+            document.getElementById('totalAllocations').textContent = '0';
+            document.getElementById('totalFrees').textContent = '0';
+            document.getElementById('memoryLeaks').textContent = '0';
+            document.getElementById('leakedBytes').textContent = '0 B';
+            document.getElementById('criticalIssues').textContent = '0';
+            document.getElementById('leaksList').innerHTML = '<p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>';
+            document.getElementById('analysisContent').innerHTML = '<p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>';
+            if (memoryChart) memoryChart.destroy();
+            if (timelineChart) timelineChart.destroy();
+            currentAnalysis = null;
+        }
+
+        function analyzeCode() {
+            const code = document.getElementById('codeEditor').value;
+            if (!code.trim()) {
+                alert('Please enter some code to analyze.');
+                return;
+            }
+
+            // Simulate analysis
+            const analysis = performAnalysis(code);
+            currentAnalysis = analysis;
+            updateDashboard(analysis);
+            updateLeaksTab(analysis);
+            updateAnalysisTab(analysis);
+            updateTimelineChart(analysis);
+        }
+
+        function performAnalysis(code) {
+            const lines = code.split('\n');
+            const analysis = {
+                allocations: [],
+                frees: [],
+                leaks: [],
+                warnings: [],
+                timeline: []
+            };
+
+            let lineNum = 0;
+            let currentMemory = 0;
+            const allocations = [];
+
+            lines.forEach((line, index) => {
+                lineNum = index + 1;
+                const trimmed = line.trim();
+
+                // Detect malloc/calloc/realloc
+                const mallocMatch = trimmed.match(/(\w+)\s*=\s*\([^)]+\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/);
+                if (mallocMatch) {
+                    const varName = mallocMatch[1];
+                    const func = mallocMatch[2];
+                    const sizeMatch = trimmed.match(/sizeof\s*\([^)]+\)\s*\*\s*(\d+)|(\d+)\s*\*\s*sizeof\s*\([^)]+\)|(\d+)\s*\*\s*sizeof/);
+                    const size = sizeMatch ? (parseInt(sizeMatch[1]) || parseInt(sizeMatch[2]) || parseInt(sizeMatch[3]) || 1) : 1;
+                    const bytes = size * 4; // Assume 4 bytes per element
+                    
+                    analysis.allocations.push({
+                        var: varName,
+                        line: lineNum,
+                        function: func,
+                        size: bytes,
+                        lineText: trimmed
+                    });
+                    allocations.push({ var: varName, line: lineNum, size: bytes });
+                    currentMemory += bytes;
+                }
+
+                // Detect free
+                const freeMatch = trimmed.match(/free\s*\(\s*(\w+)\s*\)/);
+                if (freeMatch) {
+                    const varName = freeMatch[1];
+                    const allocIndex = allocations.findIndex(a => a.var === varName);
+                    if (allocIndex !== -1) {
+                        analysis.frees.push({
+                            var: varName,
+                            line: lineNum,
+                            lineText: trimmed
+                        });
+                        currentMemory -= allocations[allocIndex].size;
+                        allocations.splice(allocIndex, 1);
+                    }
+                }
+
+                // Detect unsafe functions
+                if (trimmed.includes('strcpy(') && !trimmed.includes('strncpy')) {
+                    analysis.warnings.push({
+                        type: 'Unsafe Function',
+                        line: lineNum,
+                        message: 'strcpy() used without bounds checking. Consider using strncpy() or strcpy_s().',
+                        lineText: trimmed
+                    });
+                }
+
+                // Check for NULL pointer checks
+                if (mallocMatch && index < lines.length - 1) {
+                    const nextLines = lines.slice(index, Math.min(index + 3, lines.length));
+                    const hasNullCheck = nextLines.some(l => l.includes('if') && l.includes('NULL') && l.includes(mallocMatch[1]));
+                    if (!hasNullCheck) {
+                        analysis.warnings.push({
+                            type: 'Missing NULL Check',
+                            line: lineNum,
+                            message: `No NULL pointer check after ${mallocMatch[2]}() call for ${mallocMatch[1]}.`,
+                            lineText: trimmed
+                        });
+                    }
+                }
+
+                analysis.timeline.push({
+                    line: lineNum,
+                    memory: currentMemory
+                });
+            });
+
+            // Find leaks (allocations without corresponding free)
+            allocations.forEach(alloc => {
+                const leakInfo = analysis.allocations.find(a => a.var === alloc.var && a.line === alloc.line);
+                if (leakInfo) {
+                    analysis.leaks.push({
+                        var: alloc.var,
+                        line: alloc.line,
+                        function: leakInfo.function,
+                        size: alloc.size,
+                        fix: `Add free(${alloc.var}); before function return or at appropriate cleanup point.`
+                    });
+                }
+            });
+
+            return analysis;
+        }
+
+        function updateDashboard(analysis) {
+            const totalAlloc = analysis.allocations.length;
+            const totalFree = analysis.frees.length;
+            const leaks = analysis.leaks.length;
+            const leakedBytes = analysis.leaks.reduce((sum, leak) => sum + leak.size, 0);
+            const critical = analysis.warnings.filter(w => w.type === 'Missing NULL Check').length;
+
+            document.getElementById('totalAllocations').textContent = totalAlloc;
+            document.getElementById('totalFrees').textContent = totalFree;
+            document.getElementById('memoryLeaks').textContent = leaks;
+            document.getElementById('leakedBytes').textContent = formatBytes(leakedBytes);
+            document.getElementById('criticalIssues').textContent = critical;
+
+            // Update pie chart
+            const allocated = analysis.allocations.reduce((sum, a) => sum + a.size, 0);
+            const freed = analysis.frees.reduce((sum, f) => {
+                const alloc = analysis.allocations.find(a => a.var === f.var);
+                return sum + (alloc ? alloc.size : 0);
+            }, 0);
+            const leaked = leakedBytes;
+
+            const ctx = document.getElementById('memoryChart').getContext('2d');
+            if (memoryChart) memoryChart.destroy();
+            
+            memoryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Allocated', 'Freed', 'Leaked'],
+                    datasets: [{
+                        data: [allocated, freed, leaked],
+                        backgroundColor: ['#3B82F6', '#10B981', '#EF4444'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + formatBytes(context.parsed);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLeaksTab(analysis) {
+            const leaksList = document.getElementById('leaksList');
+            if (analysis.leaks.length === 0) {
+                leaksList.innerHTML = '<p class="text-green-600 text-center py-8 font-semibold">✓ No memory leaks detected!</p>';
+                return;
+            }
+
+            leaksList.innerHTML = analysis.leaks.map(leak => `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">${leak.var}</code></h4>
+                            <p class="text-sm text-gray-600 mt-1">Line ${leak.line} | Function: ${leak.function}() | Size: ${formatBytes(leak.size)}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 bg-white p-3 rounded border border-red-200">
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Fix/Solution:</p>
+                        <p class="text-sm text-gray-800">${leak.fix}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateAnalysisTab(analysis) {
+            const analysisContent = document.getElementById('analysisContent');
+            const balanceStatus = analysis.allocations.length === analysis.frees.length ? 'Balanced' : 'Unbalanced';
+            const balanceColor = balanceStatus === 'Balanced' ? 'green' : 'red';
+
+            let html = `
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">Memory Allocation Analysis</h4>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-blue-600">${analysis.allocations.length}</p>
+                                <p class="text-sm text-gray-600">malloc/calloc/realloc calls</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-green-600">${analysis.frees.length}</p>
+                                <p class="text-sm text-gray-600">free() calls</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-${balanceColor}-600">${balanceStatus}</p>
+                                <p class="text-sm text-gray-600">Memory Balance</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+                        <h4 class="font-semibold text-yellow-800 mb-3">Code Quality Warnings (${analysis.warnings.length})</h4>
+            `;
+
+            if (analysis.warnings.length === 0) {
+                html += '<p class="text-green-600">✓ No warnings detected!</p>';
+            } else {
+                html += '<div class="space-y-3">';
+                analysis.warnings.forEach(warning => {
+                    html += `
+                        <div class="bg-white p-3 rounded border border-yellow-200">
+                            <p class="font-semibold text-gray-800">${warning.type} (Line ${warning.line})</p>
+                            <p class="text-sm text-gray-700 mt-1">${warning.message}</p>
+                            <code class="text-xs bg-gray-100 px-2 py-1 rounded block mt-2">${warning.lineText}</code>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            analysisContent.innerHTML = html;
+        }
+
+        function updateTimelineChart(analysis) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            if (timelineChart) timelineChart.destroy();
+
+            const labels = analysis.timeline.map(t => `Line ${t.line}`);
+            const data = analysis.timeline.map(t => t.memory);
+
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Memory Usage (Bytes)',
+                        data: data,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Memory (Bytes)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Code Execution Line'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Memory: ' + formatBytes(context.parsed.y);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-500');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+            event.target.classList.remove('text-gray-500');
+
+            // If switching to timeline and analysis exists, ensure chart is updated
+            if (tabName === 'timeline' && currentAnalysis) {
+                updateTimelineChart(currentAnalysis);
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const tabName = this.textContent.trim().toLowerCase().replace(/\s+/g, '');
+                    switchTab(tabName);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
