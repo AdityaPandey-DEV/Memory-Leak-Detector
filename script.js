@@ -233,9 +233,12 @@ class MemoryAnalyzer {
 
         // C++ allocation patterns (new/new[])
         const cppPatterns = [
-            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,              // type *var = new Type(...)
-            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+/,                                  // type *var = new Type
-            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,            // type *var = new Type[n]
+            /\w+\s+\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,              // type *var = new Type(...)
+            /\w+\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,                 // type* var = new Type(...)
+            /\w+\s+\*\s*(\w+)\s*=\s*new\s+\w+/,                                  // type *var = new Type
+            /\w+\*\s*(\w+)\s*=\s*new\s+\w+/,                                     // type* var = new Type
+            /\w+\s+\*\s*(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,            // type *var = new Type[n]
+            /\w+\*\s*(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,               // type* var = new Type[n]
             /(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,                        // var = new Type(...)
             /(\w+)\s*=\s*new\s+\w+/,                                            // var = new Type
             /(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,                      // var = new Type[n]
@@ -387,8 +390,8 @@ class MemoryAnalyzer {
             };
         }
 
-        // C++ delete
-        const deleteMatch = line.match(/delete\s+(\w+)/);
+        // C++ delete (handle both delete p and delete(p))
+        const deleteMatch = line.match(/delete\s+(?:\(\s*)?(\w+)(?:\s*\))?/);
         if (deleteMatch) {
             return {
                 var: deleteMatch[1],
@@ -399,8 +402,8 @@ class MemoryAnalyzer {
             };
         }
 
-        // C++ delete[]
-        const deleteArrayMatch = line.match(/delete\s*\[\s*\]\s*(\w+)/);
+        // C++ delete[] (handle both delete[] p and delete[](p))
+        const deleteArrayMatch = line.match(/delete\s*\[\s*\]\s*(?:\(\s*)?(\w+)(?:\s*\))?/);
         if (deleteArrayMatch) {
             return {
                 var: deleteArrayMatch[1],
