@@ -422,11 +422,15 @@ function updateTimelineChart(analysis) {
     }, 100);
 }
 
-function switchTab(tabName, clickedButton) {
+function switchTab(tabName) {
+    console.log('Switching to tab:', tabName);
+    
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
+    
+    // Reset all buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
         btn.classList.add('text-gray-500');
@@ -436,26 +440,19 @@ function switchTab(tabName, clickedButton) {
     const tabElement = document.getElementById(`${tabName}-tab`);
     if (tabElement) {
         tabElement.classList.add('active');
+        console.log('Tab element found and activated:', tabElement.id);
+    } else {
+        console.error('Tab element not found:', `${tabName}-tab`);
     }
 
-    // Update button styles
-    if (clickedButton) {
-        clickedButton.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-        clickedButton.classList.remove('text-gray-500');
-    } else {
-        // Find button by tab name if not provided
-        const buttons = document.querySelectorAll('.tab-btn');
-        buttons.forEach(btn => {
-            const btnText = btn.textContent.trim().toLowerCase();
-            if ((tabName === 'leaks' && btnText.includes('memory leaks')) ||
-                (tabName === 'analysis' && btnText.includes('code analysis')) ||
-                (tabName === 'timeline' && btnText.includes('memory timeline')) ||
-                (tabName === 'recommendations' && btnText.includes('recommendations'))) {
-                btn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-                btn.classList.remove('text-gray-500');
-            }
-        });
-    }
+    // Update button styles - find button by data-tab attribute
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabName) {
+            btn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+            btn.classList.remove('text-gray-500');
+        }
+    });
 
     // If switching to timeline and analysis exists, ensure chart is updated
     if (tabName === 'timeline') {
@@ -463,7 +460,7 @@ function switchTab(tabName, clickedButton) {
             // Small delay to ensure tab is visible before rendering chart
             setTimeout(() => {
                 updateTimelineChart(currentAnalysis);
-            }, 50);
+            }, 100);
         } else {
             // Show message if no analysis
             const canvas = document.getElementById('timelineChart');
@@ -493,23 +490,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            const btnText = this.textContent.trim().toLowerCase();
-            let tabName = '';
-            
-            if (btnText.includes('memory leaks')) {
-                tabName = 'leaks';
-            } else if (btnText.includes('code analysis')) {
-                tabName = 'analysis';
-            } else if (btnText.includes('memory timeline')) {
-                tabName = 'timeline';
-            } else if (btnText.includes('recommendations')) {
-                tabName = 'recommendations';
-            }
-            
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
             if (tabName) {
-                switchTab(tabName, this);
+                switchTab(tabName);
             }
         });
     });
+    
+    // Make switchTab available globally for debugging
+    window.switchTab = switchTab;
 });
 
