@@ -247,6 +247,31 @@ function performAnalysis(code) {
             
             const bytes = size * bytesPerElement;
             
+            // Check if this variable was already allocated (pointer reassignment)
+            // This indicates a memory leak - the previous allocation is lost
+            const existingAllocIndex = allocations.findIndex(a => a.var === varName);
+            if (existingAllocIndex !== -1) {
+                // Previous allocation exists - this is a pointer reassignment leak
+                const previousAlloc = allocations[existingAllocIndex];
+                const previousLeakInfo = analysis.allocations.find(a => a.allocId === previousAlloc.allocId);
+                
+                if (previousLeakInfo) {
+                    // Mark the previous allocation as a leak due to pointer reassignment
+                    analysis.leaks.push({
+                        var: varName,
+                        line: previousAlloc.line,
+                        function: previousLeakInfo.function,
+                        size: previousAlloc.size,
+                        inLoop: previousAlloc.inLoop,
+                        fix: `Memory leak: ${varName} was reassigned on line ${lineNum} without freeing the previous allocation. Add free(${varName}); before the reassignment on line ${lineNum}.`
+                    });
+                }
+                
+                // Remove the previous allocation from tracking (it's now leaked)
+                currentMemory -= previousAlloc.size;
+                allocations.splice(existingAllocIndex, 1);
+            }
+            
             // Create unique identifier for loop allocations
             const allocId = inLoop ? `${varName}_line${lineNum}_iter${loopDepth}` : `${varName}_line${lineNum}`;
             
