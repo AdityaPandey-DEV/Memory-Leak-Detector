@@ -1,0 +1,298 @@
+/* ============================================
+   MLDA - Component Styles
+   Buttons, Cards, Tabs, Forms, etc.
+   ============================================ */
+
+/* ===== Tab Content Styles ===== */
+.tab-content {
+    display: none !important;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-content.active {
+    display: block !important;
+}
+
+/* ===== Stat Card Styles ===== */
+.stat-card {
+    transition: var(--transition-base);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card svg {
+    transition: var(--transition-base);
+}
+
+.stat-card:hover svg {
+    transform: scale(1.1);
+}
+
+/* ===== Button Styles ===== */
+button {
+    transition: var(--transition-base);
+    cursor: pointer;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+    min-height: 42px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Action buttons (primary buttons) */
+button.bg-blue-500,
+button.bg-green-500,
+button.bg-red-500,
+button.bg-purple-500,
+button.bg-orange-500,
+button.bg-yellow-500,
+button.bg-emerald-600,
+button.bg-indigo-600,
+button.bg-rose-600,
+button.bg-violet-600,
+button.bg-cyan-600,
+.btn-load-sample,
+.btn-analyze,
+.btn-clear,
+.btn-export,
+.btn-share {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Professional button colors */
+.btn-load-sample {
+    background-color: #059669 !important;
+    border: 1px solid #047857;
+}
+
+.btn-load-sample:hover {
+    background-color: #047857 !important;
+    border-color: #065f46;
+    box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.3);
+}
+
+.btn-analyze {
+    background-color: #4F46E5 !important;
+    border: 1px solid #4338CA;
+}
+
+.btn-analyze:hover {
+    background-color: #4338CA !important;
+    border-color: #3730A3;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.btn-clear {
+    background-color: #E11D48 !important;
+    border: 1px solid #BE185D;
+}
+
+.btn-clear:hover {
+    background-color: #BE185D !important;
+    border-color: #9F1239;
+    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.3);
+}
+
+.btn-export {
+    background-color: #7C3AED !important;
+    border: 1px solid #6D28D9;
+}
+
+.btn-export:hover {
+    background-color: #6D28D9 !important;
+    border-color: #5B21B6;
+    box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3);
+}
+
+.btn-share {
+    background-color: #0891B2 !important;
+    border: 1px solid #0E7490;
+}
+
+.btn-share:hover {
+    background-color: #0E7490 !important;
+    border-color: #155E75;
+    box-shadow: 0 4px 6px -1px rgba(8, 145, 178, 0.3);
+}
+
+/* Smaller buttons */
+button.text-sm {
+    min-height: 36px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Icon buttons */
+button[aria-label] {
+    min-width: 44px;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Button hover effects */
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+button:active:hover {
+    transform: scale(0.97) translateY(0);
+}
+
+/* ===== Tab Button Styles ===== */
+.tab-btn {
+    position: relative;
+    transition: var(--transition-base);
+    border-bottom: 3px solid transparent;
+    min-height: 52px;
+    padding: 0.875rem 1.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6B7280;
+    margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+    background-color: rgba(59, 130, 246, 0.08);
+    color: #4B5563;
+}
+
+.tab-btn.active {
+    color: #4F46E5;
+    border-bottom-color: #4F46E5;
+    font-weight: 600;
+    background-color: transparent;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #4F46E5;
+    border-radius: 3px 3px 0 0;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* ===== Leak Item Styles ===== */
+.leak-item {
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.leak-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--danger-color);
+    transition: width 0.3s ease;
+}
+
+.leak-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.leak-item:hover::before {
+    width: 6px;
+}
+
+/* ===== Form Elements ===== */
+select {
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+select:hover {
+    border-color: var(--primary-color);
+}
+
+/* ===== Recommendations Card Styles ===== */
+.bg-blue-50,
+.bg-green-50,
+.bg-yellow-50,
+.bg-purple-50,
+.bg-red-50,
+.bg-indigo-50,
+.bg-teal-50 {
+    transition: var(--transition-base);
+}
+
+.bg-blue-50:hover,
+.bg-green-50:hover,
+.bg-yellow-50:hover,
+.bg-purple-50:hover,
+.bg-red-50:hover,
+.bg-indigo-50:hover,
+.bg-teal-50:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== Print Styles ===== */
+@media print {
+    .tab-btn,
+    button,
+    #codeEditor,
+    select {
+        display: none;
+    }
+    
+    .tab-content {
+        display: block !important;
+    }
+    
+    .stat-card {
+        break-inside: avoid;
+    }
+}
+

@@ -1,0 +1,69 @@
+/* ============================================
+   MLDA - Header / Navbar Styles
+   ============================================ */
+
+header {
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+header .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Header logo animation */
+header svg[viewBox="0 0 24 24"]:first-of-type {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Header button hover effects */
+header button,
+header a {
+    position: relative;
+    overflow: hidden;
+}
+
+header button::before,
+header a::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+header button:hover::before,
+header a:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+header button svg,
+header a svg {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s;
+}
+
+header button:hover svg,
+header a:hover svg {
+    transform: rotate(5deg);
+}
+

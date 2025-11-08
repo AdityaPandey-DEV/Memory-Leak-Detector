@@ -1,0 +1,143 @@
+/* ============================================
+   MLDA - Responsive Styles
+   Media Queries for Mobile, Tablet, Desktop
+   ============================================ */
+
+/* ===== Mobile Responsive (max-width: 768px) ===== */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .flex.gap-2.items-center {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .flex.gap-2.items-center button {
+        flex: 1 1 auto;
+        min-width: 100px;
+        min-height: 40px;
+        font-size: 0.875rem;
+        padding: 0.625rem 1rem;
+    }
+    
+    .flex.gap-2.items-center button.bg-blue-500,
+    .flex.gap-2.items-center button.bg-green-500,
+    .flex.gap-2.items-center button.bg-red-500,
+    .flex.gap-2.items-center button.bg-purple-500,
+    .flex.gap-2.items-center button.bg-orange-500,
+    .flex.gap-2.items-center button.bg-yellow-500,
+    .flex.gap-2.items-center button.bg-emerald-600,
+    .flex.gap-2.items-center button.bg-indigo-600,
+    .flex.gap-2.items-center button.bg-rose-600,
+    .flex.gap-2.items-center button.bg-violet-600,
+    .flex.gap-2.items-center button.bg-cyan-600,
+    .flex.gap-2.items-center .btn-load-sample,
+    .flex.gap-2.items-center .btn-analyze,
+    .flex.gap-2.items-center .btn-clear,
+    .flex.gap-2.items-center .btn-export,
+    .flex.gap-2.items-center .btn-share {
+        min-height: 42px !important;
+        height: 42px !important;
+        padding: 0.75rem 1.25rem !important;
+        font-size: 0.9375rem !important;
+    }
+    
+    #codeEditor {
+        min-height: 400px !important;
+        height: auto !important;
+        font-size: 13px;
+        padding: 0.75rem 1rem !important;
+        padding-left: 3rem !important;
+        line-height: 1.6;
+    }
+    
+    .code-editor-wrapper {
+        min-height: 400px;
+    }
+    
+    .code-editor-header,
+    .code-editor-footer {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.6875rem;
+    }
+    
+    .code-editor-container {
+        border-width: 1px;
+    }
+    
+    .grid.grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+    
+    .tab-btn {
+        font-size: 0.8125rem;
+        padding: 0.625rem 1rem;
+        min-height: 44px;
+        flex: 1;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-card span {
+        font-size: 1.25rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    h3 {
+        font-size: 1.125rem;
+    }
+}
+
+/* ===== Responsive Header ===== */
+@media (max-width: 640px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    header .flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    header .flex > div:last-child {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* ===== Tablet Responsive (769px - 1024px) ===== */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    #codeEditor {
+        min-height: 500px;
+    }
+}
+
+/* ===== Desktop Large Screens (min-width: 1025px) ===== */
+@media (min-width: 1025px) {
+    #codeEditor {
+        min-height: 600px;
+    }
+    
+    .code-editor-wrapper {
+        min-height: 600px;
+    }
+}
+
