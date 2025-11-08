@@ -841,14 +841,6 @@ class MemoryAnalyzer {
         this.warnings = [];
         this.timeline = [];
         this.currentMemory = 0;
-        this.scopeStack = []; // Track scopes (functions, blocks)
-        this.controlFlow = {
-            inLoop: false,
-            loopDepth: 0,
-            inFunction: false,
-            functionName: null,
-            braceDepth: 0
-        };
         this.astParser = new ASTParser(language);
     }
 
@@ -991,38 +983,6 @@ class MemoryAnalyzer {
     }
 
     // Note: Old regex-based detection methods removed - now using AST parsing
-
-    calculateSize(args, line) {
-        if (!args) return 1;
-
-        // Handle calloc(n, size)
-        const callocMatch = args.match(/(\d+)\s*,\s*(\d+)/);
-        if (callocMatch) {
-            return (parseInt(callocMatch[1]) || 1) * (parseInt(callocMatch[2]) || 1);
-        }
-
-        // Handle sizeof patterns
-        const sizeofPattern1 = args.match(/(\d+)\s*\*\s*sizeof\s*\([^)]+\)/);  // n * sizeof(type)
-        const sizeofPattern2 = args.match(/sizeof\s*\([^)]+\)\s*\*\s*(\d+)/);   // sizeof(type) * n
-        
-        if (sizeofPattern1) {
-            const count = parseInt(sizeofPattern1[1]) || 1;
-            const typeSize = this.getTypeSize(args);
-            return count * typeSize;
-        } else if (sizeofPattern2) {
-            const count = parseInt(sizeofPattern2[1]) || 1;
-            const typeSize = this.getTypeSize(args);
-            return count * typeSize;
-        }
-
-        // Direct number
-        const numMatch = args.match(/(\d+)/);
-        if (numMatch) {
-            return parseInt(numMatch[1]) || 1;
-        }
-
-        return 1;
-    }
 
     getTypeSize(args) {
         const sizeofMatch = args.match(/sizeof\s*\(([^)]+)\)/);
