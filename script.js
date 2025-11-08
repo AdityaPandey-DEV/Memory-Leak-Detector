@@ -117,11 +117,35 @@ function performAnalysis(code) {
     let lineNum = 0;
     let currentMemory = 0;
     const allocations = [];
+    let inLoop = false;
+    let loopDepth = 0;
+    const loopAllocations = new Map(); // Track allocations within loops
 
     lines.forEach((line, index) => {
         lineNum = index + 1;
         const originalLine = line;
         const trimmed = removeComments(line); // Remove comments before processing
+        
+        // Detect loop start - handle for, while, do-while
+        const loopStartMatch = trimmed.match(/\b(for|while|do)\s*\(/);
+        if (loopStartMatch) {
+            inLoop = true;
+            loopDepth++;
+        }
+        
+        // Detect loop end - closing brace (simple heuristic)
+        // This is not perfect but works for most cases
+        if (trimmed.trim() === '}' && inLoop && loopDepth > 0) {
+            loopDepth--;
+            if (loopDepth === 0) {
+                inLoop = false;
+            }
+        }
+        
+        // Also detect opening brace to track depth
+        if (trimmed.trim() === '{') {
+            // Opening brace doesn't change loop state, just depth
+        }
         
         // Skip empty lines after comment removal
         if (!trimmed) {
@@ -223,15 +247,38 @@ function performAnalysis(code) {
             
             const bytes = size * bytesPerElement;
             
+            // Create unique identifier for loop allocations
+            const allocId = inLoop ? `${varName}_line${lineNum}_iter${loopDepth}` : `${varName}_line${lineNum}`;
+            
             analysis.allocations.push({
                 var: varName,
                 line: lineNum,
                 function: func,
                 size: bytes,
-                lineText: originalLine.trim()
+                lineText: originalLine.trim(),
+                inLoop: inLoop,
+                allocId: allocId
             });
-            allocations.push({ var: varName, line: lineNum, size: bytes });
+            allocations.push({ 
+                var: varName, 
+                line: lineNum, 
+                size: bytes,
+                allocId: allocId,
+                inLoop: inLoop
+            });
             currentMemory += bytes;
+            
+            // Track loop allocations separately
+            if (inLoop) {
+                if (!loopAllocations.has(varName)) {
+                    loopAllocations.set(varName, []);
+                }
+                loopAllocations.get(varName).push({
+                    line: lineNum,
+                    size: bytes,
+                    allocId: allocId
+                });
+            }
         }
 
         // Detect free - more flexible pattern
@@ -248,15 +295,35 @@ function performAnalysis(code) {
         
         if (freeMatch) {
             const varName = freeMatch[1];
-            const allocIndex = allocations.findIndex(a => a.var === varName);
+            // Find the most recent allocation of this variable (LIFO - Last In First Out)
+            // This handles the case where the same variable is allocated multiple times
+            let allocIndex = -1;
+            for (let i = allocations.length - 1; i >= 0; i--) {
+                if (allocations[i].var === varName) {
+                    allocIndex = i;
+                    break;
+                }
+            }
+            
             if (allocIndex !== -1) {
+                const freedAlloc = allocations[allocIndex];
                 analysis.frees.push({
                     var: varName,
                     line: lineNum,
-                    lineText: originalLine.trim()
+                    lineText: originalLine.trim(),
+                    freedAllocId: freedAlloc.allocId
                 });
-                currentMemory -= allocations[allocIndex].size;
+                currentMemory -= freedAlloc.size;
                 allocations.splice(allocIndex, 1);
+                
+                // Also remove from loop allocations if it was in a loop
+                if (freedAlloc.inLoop && loopAllocations.has(varName)) {
+                    const loopAllocs = loopAllocations.get(varName);
+                    const loopIndex = loopAllocs.findIndex(a => a.allocId === freedAlloc.allocId);
+                    if (loopIndex !== -1) {
+                        loopAllocs.splice(loopIndex, 1);
+                    }
+                }
             }
         }
 
@@ -295,14 +362,19 @@ function performAnalysis(code) {
 
     // Find leaks (allocations without corresponding free)
     allocations.forEach(alloc => {
-        const leakInfo = analysis.allocations.find(a => a.var === alloc.var && a.line === alloc.line);
+        const leakInfo = analysis.allocations.find(a => a.allocId === alloc.allocId);
         if (leakInfo) {
+            let fixMessage = `Add free(${alloc.var}); before function return or at appropriate cleanup point.`;
+            if (alloc.inLoop) {
+                fixMessage = `Add free(${alloc.var}); inside the loop after use, or collect pointers and free them after the loop.`;
+            }
             analysis.leaks.push({
                 var: alloc.var,
                 line: alloc.line,
                 function: leakInfo.function,
                 size: alloc.size,
-                fix: `Add free(${alloc.var}); before function return or at appropriate cleanup point.`
+                inLoop: alloc.inLoop,
+                fix: fixMessage
             });
         }
     });
