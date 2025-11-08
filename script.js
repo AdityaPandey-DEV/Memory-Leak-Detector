@@ -195,8 +195,11 @@ function analyzeCode() {
         return;
     }
 
+    // Get selected language
+    const language = document.getElementById('languageSelect').value;
+
     // Simulate analysis
-    const analysis = performAnalysis(code);
+    const analysis = performAnalysis(code, language);
     currentAnalysis = analysis;
     updateDashboard(analysis);
     updateLeaksTab(analysis);
@@ -206,7 +209,8 @@ function analyzeCode() {
 
 // Comprehensive Memory Leak Detection Engine
 class MemoryAnalyzer {
-    constructor() {
+    constructor(language = 'c') {
+        this.language = language;
         this.allocations = new Map(); // varName -> [allocations]
         this.frees = [];
         this.warnings = [];
@@ -310,7 +314,33 @@ class MemoryAnalyzer {
     }
 
     detectAllocation(line, lineNum, originalLine) {
-        // C-style allocation patterns (malloc/calloc/realloc)
+        // Route to language-specific detection
+        switch(this.language) {
+            case 'c':
+                return this.detectCAllocation(line, lineNum, originalLine);
+            case 'cpp':
+                return this.detectCppAllocation(line, lineNum, originalLine) || 
+                       this.detectCAllocation(line, lineNum, originalLine); // C++ can also use C patterns
+            case 'javascript':
+                return this.detectJavaScriptAllocation(line, lineNum, originalLine);
+            case 'python':
+                return this.detectPythonAllocation(line, lineNum, originalLine);
+            case 'java':
+                return this.detectJavaAllocation(line, lineNum, originalLine);
+            case 'rust':
+                return this.detectRustAllocation(line, lineNum, originalLine);
+            case 'go':
+                return this.detectGoAllocation(line, lineNum, originalLine);
+            default:
+                // Try all patterns for unknown languages
+                return this.detectCppAllocation(line, lineNum, originalLine) ||
+                       this.detectCAllocation(line, lineNum, originalLine) ||
+                       this.detectJavaScriptAllocation(line, lineNum, originalLine);
+        }
+    }
+
+    // C allocation patterns (malloc/calloc/realloc)
+    detectCAllocation(line, lineNum, originalLine) {
         const cPatterns = [
             /\w+\s+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/,  // type *var = malloc(...)
             /\w+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/,     // type* var = malloc(...)
@@ -341,8 +371,11 @@ class MemoryAnalyzer {
                 };
             }
         }
+        return null;
+    }
 
-        // C++ allocation patterns (new/new[])
+    // C++ allocation patterns (new/new[])
+    detectCppAllocation(line, lineNum, originalLine) {
         const cppPatterns = [
             /\w+\s+\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,              // type *var = new Type(...)
             /\w+\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,                 // type* var = new Type(...)
@@ -375,6 +408,181 @@ class MemoryAnalyzer {
                     functionName: this.controlFlow.functionName,
                     allocId: `${varName}_line${lineNum}_${Date.now()}`,
                     language: 'C++'
+                };
+            }
+        }
+        return null;
+    }
+
+    // JavaScript allocation patterns
+    detectJavaScriptAllocation(line, lineNum, originalLine) {
+        const jsPatterns = [
+            /(?:const|let|var)\s+(\w+)\s*=\s*new\s+Array\s*\(\s*([^)]+)\s*\)/,     // const arr = new Array(n)
+            /(?:const|let|var)\s+(\w+)\s*=\s*new\s+Array\s*\(/,                     // const arr = new Array()
+            /(?:const|let|var)\s+(\w+)\s*=\s*\[\s*\]/,                              // const arr = []
+            /(?:const|let|var)\s+(\w+)\s*=\s*new\s+ArrayBuffer\s*\(\s*([^)]+)\s*\)/, // const buf = new ArrayBuffer(n)
+            /(?:const|let|var)\s+(\w+)\s*=\s*new\s+Uint8Array\s*\(\s*([^)]+)\s*\)/,  // const arr = new Uint8Array(n)
+            /(?:const|let|var)\s+(\w+)\s*=\s*new\s+Object\s*\(/,                   // const obj = new Object()
+            /(?:const|let|var)\s+(\w+)\s*=\s*\{\s*/,                                // const obj = {}
+        ];
+
+        for (const pattern of jsPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const sizeArg = match[2] || '1';
+                const size = parseInt(sizeArg) || 1;
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: 'new',
+                    size: size * 8, // Estimate 8 bytes per element
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'JavaScript'
+                };
+            }
+        }
+        return null;
+    }
+
+    // Python allocation patterns
+    detectPythonAllocation(line, lineNum, originalLine) {
+        const pythonPatterns = [
+            /(\w+)\s*=\s*\[\s*\]/,                                                // arr = []
+            /(\w+)\s*=\s*list\s*\(/,                                              // arr = list()
+            /(\w+)\s*=\s*\[\s*0\s*\]\s*\*\s*(\d+)/,                              // arr = [0] * n
+            /(\w+)\s*=\s*bytearray\s*\(\s*(\d+)\s*\)/,                           // buf = bytearray(n)
+            /(\w+)\s*=\s*bytes\s*\(\s*(\d+)\s*\)/,                               // buf = bytes(n)
+            /(\w+)\s*=\s*dict\s*\(/,                                              // d = dict()
+            /(\w+)\s*=\s*\{\s*/,                                                  // d = {}
+        ];
+
+        for (const pattern of pythonPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const sizeArg = match[2] || '1';
+                const size = parseInt(sizeArg) || 1;
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: 'alloc',
+                    size: size * 8, // Estimate 8 bytes per element
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'Python'
+                };
+            }
+        }
+        return null;
+    }
+
+    // Java allocation patterns
+    detectJavaAllocation(line, lineNum, originalLine) {
+        const javaPatterns = [
+            /(\w+)\s*=\s*new\s+\w+\s*\[\s*(\d+)\s*\]/,                            // arr = new Type[n]
+            /(\w+)\s*=\s*new\s+\w+\s*\(/,                                         // obj = new Type()
+            /(\w+)\s*=\s*new\s+ArrayList\s*\(/,                                   // list = new ArrayList()
+            /(\w+)\s*=\s*new\s+HashMap\s*\(/,                                     // map = new HashMap()
+        ];
+
+        for (const pattern of javaPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const sizeArg = match[2] || '1';
+                const size = parseInt(sizeArg) || 1;
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: 'new',
+                    size: size * 4, // Estimate 4 bytes per element
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'Java'
+                };
+            }
+        }
+        return null;
+    }
+
+    // Rust allocation patterns
+    detectRustAllocation(line, lineNum, originalLine) {
+        const rustPatterns = [
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*Vec::new\s*\(/,                        // let vec = Vec::new()
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*vec!\s*\[/,                             // let vec = vec![]
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*vec!\s*\[[^\]]*\]\s*;\s*(\d+)/,        // let vec = vec![0; n]
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*Box::new\s*\(/,                        // let box = Box::new()
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*Rc::new\s*\(/,                         // let rc = Rc::new()
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*Arc::new\s*\(/,                        // let arc = Arc::new()
+        ];
+
+        for (const pattern of rustPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const sizeArg = match[2] || '1';
+                const size = parseInt(sizeArg) || 1;
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: 'alloc',
+                    size: size * 8, // Estimate 8 bytes per element
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'Rust'
+                };
+            }
+        }
+        return null;
+    }
+
+    // Go allocation patterns
+    detectGoAllocation(line, lineNum, originalLine) {
+        const goPatterns = [
+            /(\w+)\s*:=\s*make\s*\(\s*\[\]\s*\w+,\s*(\d+)\s*\)/,                 // arr := make([]type, n)
+            /(\w+)\s*:=\s*make\s*\(\s*\[\]\s*\w+,\s*(\d+),\s*(\d+)\s*\)/,         // arr := make([]type, n, cap)
+            /(\w+)\s*:=\s*make\s*\(\s*map\s*\[/,                                  // m := make(map[...])
+            /(\w+)\s*:=\s*make\s*\(\s*chan\s*/,                                   // ch := make(chan)
+            /(\w+)\s*:=\s*\[\]\s*\w+\s*\{/,                                       // arr := []type{}
+            /(\w+)\s*:=\s*new\s*\(\s*\w+\s*\)/,                                   // ptr := new(Type)
+        ];
+
+        for (const pattern of goPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const sizeArg = match[2] || match[3] || '1';
+                const size = parseInt(sizeArg) || 1;
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: 'make',
+                    size: size * 8, // Estimate 8 bytes per element
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'Go'
                 };
             }
         }
@@ -616,8 +824,8 @@ class MemoryAnalyzer {
     }
 }
 
-function performAnalysis(code) {
-    const analyzer = new MemoryAnalyzer();
+function performAnalysis(code, language = 'c') {
+    const analyzer = new MemoryAnalyzer(language);
     const analysis = analyzer.analyze(code);
     analysis.timeline = analyzer.timeline;
     return analysis;
