@@ -58,8 +58,22 @@ function resetDashboard() {
     document.getElementById('criticalIssues').textContent = '0 issues';
     document.getElementById('leaksList').innerHTML = '<p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>';
     document.getElementById('analysisContent').innerHTML = '<p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>';
-    if (memoryChart) memoryChart.destroy();
-    if (timelineChart) timelineChart.destroy();
+    if (memoryChart) {
+        memoryChart.destroy();
+        memoryChart = null;
+    }
+    if (timelineChart) {
+        timelineChart.destroy();
+        timelineChart = null;
+    }
+    // Remove timeline messages
+    const timelineTab = document.getElementById('timeline-tab');
+    if (timelineTab) {
+        const existingMsg = timelineTab.querySelector('.no-timeline-msg');
+        if (existingMsg) {
+            existingMsg.remove();
+        }
+    }
     currentAnalysis = null;
 }
 
@@ -311,66 +325,104 @@ function updateAnalysisTab(analysis) {
 }
 
 function updateTimelineChart(analysis) {
-    const ctx = document.getElementById('timelineChart').getContext('2d');
-    if (timelineChart) timelineChart.destroy();
+    const canvas = document.getElementById('timelineChart');
+    if (!canvas) {
+        console.error('Timeline chart canvas not found');
+        return;
+    }
+
+    // Remove any existing messages
+    const timelineTab = document.getElementById('timeline-tab');
+    if (timelineTab) {
+        const existingMsg = timelineTab.querySelector('.no-timeline-msg');
+        if (existingMsg) {
+            existingMsg.remove();
+        }
+    }
+
+    // Destroy existing chart
+    if (timelineChart) {
+        timelineChart.destroy();
+        timelineChart = null;
+    }
+
+    if (!analysis || !analysis.timeline || analysis.timeline.length === 0) {
+        // Show message if no timeline data
+        if (timelineTab) {
+            const msg = document.createElement('p');
+            msg.className = 'no-timeline-msg text-gray-500 text-center py-8';
+            msg.textContent = 'No timeline data available. Please analyze code first.';
+            canvas.parentElement.appendChild(msg);
+        }
+        return;
+    }
 
     const labels = analysis.timeline.map(t => `Line ${t.line}`);
     const data = analysis.timeline.map(t => t.memory);
 
-    timelineChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Memory Usage (Bytes)',
-                data: data,
-                borderColor: '#3B82F6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Memory (Bytes)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Code Execution Line'
-                    },
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                }
+    // Use setTimeout to ensure canvas is visible before rendering
+    setTimeout(() => {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.error('Could not get 2d context');
+            return;
+        }
+
+        timelineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Memory Usage (Bytes)',
+                    data: data,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Memory (Bytes)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Code Execution Line'
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'Memory: ' + formatBytes(context.parsed.y);
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Memory: ' + formatBytes(context.parsed.y);
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }, 100);
 }
 
-function switchTab(tabName) {
+function switchTab(tabName, clickedButton) {
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -381,13 +433,50 @@ function switchTab(tabName) {
     });
 
     // Show selected tab
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-    event.target.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-    event.target.classList.remove('text-gray-500');
+    const tabElement = document.getElementById(`${tabName}-tab`);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    }
+
+    // Update button styles
+    if (clickedButton) {
+        clickedButton.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+        clickedButton.classList.remove('text-gray-500');
+    } else {
+        // Find button by tab name if not provided
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            const btnText = btn.textContent.trim().toLowerCase();
+            if ((tabName === 'leaks' && btnText.includes('memory leaks')) ||
+                (tabName === 'analysis' && btnText.includes('code analysis')) ||
+                (tabName === 'timeline' && btnText.includes('memory timeline')) ||
+                (tabName === 'recommendations' && btnText.includes('recommendations'))) {
+                btn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.remove('text-gray-500');
+            }
+        });
+    }
 
     // If switching to timeline and analysis exists, ensure chart is updated
-    if (tabName === 'timeline' && currentAnalysis) {
-        updateTimelineChart(currentAnalysis);
+    if (tabName === 'timeline') {
+        if (currentAnalysis) {
+            // Small delay to ensure tab is visible before rendering chart
+            setTimeout(() => {
+                updateTimelineChart(currentAnalysis);
+            }, 50);
+        } else {
+            // Show message if no analysis
+            const canvas = document.getElementById('timelineChart');
+            if (canvas && canvas.parentElement) {
+                const existingMsg = canvas.parentElement.querySelector('.no-timeline-msg');
+                if (!existingMsg) {
+                    const msg = document.createElement('p');
+                    msg.className = 'no-timeline-msg text-gray-500 text-center py-8';
+                    msg.textContent = 'No analysis performed yet. Click "Analyze Memory" to start.';
+                    canvas.parentElement.insertBefore(msg, canvas);
+                }
+            }
+        }
     }
 }
 
@@ -404,8 +493,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            const tabName = this.textContent.trim().toLowerCase().replace(/\s+/g, '');
-            switchTab(tabName);
+            const btnText = this.textContent.trim().toLowerCase();
+            let tabName = '';
+            
+            if (btnText.includes('memory leaks')) {
+                tabName = 'leaks';
+            } else if (btnText.includes('code analysis')) {
+                tabName = 'analysis';
+            } else if (btnText.includes('memory timeline')) {
+                tabName = 'timeline';
+            } else if (btnText.includes('recommendations')) {
+                tabName = 'recommendations';
+            }
+            
+            if (tabName) {
+                switchTab(tabName, this);
+            }
         });
     });
 });
