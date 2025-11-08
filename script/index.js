@@ -558,16 +558,20 @@ function copyLeakFromElement(button) {
             return;
         }
 
-        const leakData = leakItem.getAttribute('data-leak');
+        let leakData = leakItem.getAttribute('data-leak');
         if (!leakData) {
             notifications.warning('Leak data not found');
             return;
         }
 
+        // Decode URI component back to JSON
+        leakData = decodeURIComponent(leakData);
+        
         const leak = JSON.parse(leakData);
         copyLeakDetails(leak);
     } catch (error) {
         debugError('Error copying leak from element:', error);
-        notifications.error('Failed to copy leak details');
+        debugError('Leak data that failed to parse:', leakItem ? leakItem.getAttribute('data-leak') : 'N/A');
+        notifications.error('Failed to copy leak details: ' + error.message);
     }
 }

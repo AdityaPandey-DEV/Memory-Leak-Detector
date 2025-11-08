@@ -161,7 +161,10 @@ function updateLeaksTab(analysis) {
             const func = escapeHtml(leak.function || 'unknown');
             const size = formatBytes(leak.size || 0);
             const fix = escapeHtml(leak.fix || 'No fix available');
-            const leakData = escapeHtml(JSON.stringify(leak));
+            // Properly encode JSON for HTML attribute (escape quotes but preserve JSON structure)
+            // Use encodeURIComponent to safely encode the JSON string for HTML attributes
+            const leakDataJson = JSON.stringify(leak);
+            const leakData = encodeURIComponent(leakDataJson);
             return '<div class="leak-item bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" data-line="' + line + '" data-size="' + (leak.size || 0) + '" data-variable="' + varName + '" data-leak="' + leakData + '">' +
                 '<div class="flex justify-between items-start mb-2">' +
                 '<div class="flex-1">' +
