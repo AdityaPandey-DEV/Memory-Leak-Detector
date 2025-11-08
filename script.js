@@ -133,7 +133,26 @@ func processData() {
 
 function updateLanguage() {
     selectedLanguage = document.getElementById('languageSelect').value;
-    // Update analysis patterns based on language if needed
+    const codeEditor = document.getElementById('codeEditor');
+    
+    // Update placeholder based on language
+    const placeholders = {
+        'c': 'Enter your C code here...',
+        'cpp': 'Enter your C++ code here...',
+        'javascript': 'Enter your JavaScript code here...',
+        'python': 'Enter your Python code here...',
+        'java': 'Enter your Java code here...',
+        'rust': 'Enter your Rust code here...',
+        'go': 'Enter your Go code here...',
+        'html': 'Enter your HTML code here...',
+        'css': 'Enter your CSS code here...',
+        'other': 'Enter your code here...'
+    };
+    
+    if (codeEditor) {
+        codeEditor.placeholder = placeholders[selectedLanguage] || 'Enter your code here...';
+    }
+    
     console.log('Language changed to:', selectedLanguage);
 }
 
