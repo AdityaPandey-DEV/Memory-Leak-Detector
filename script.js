@@ -300,6 +300,57 @@ function exportAnalysis() {
 }
 
 /**
+ * Update code editor line and character counts
+ */
+function updateEditorStats() {
+    try {
+        const codeEditor = document.getElementById('codeEditor');
+        const lineCountEl = document.getElementById('lineCount');
+        const charCountEl = document.getElementById('charCount');
+        
+        if (!codeEditor) return;
+        
+        const code = codeEditor.value;
+        const lines = code.split('\n').length;
+        const chars = code.length;
+        
+        if (lineCountEl) {
+            lineCountEl.textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+        }
+        
+        if (charCountEl) {
+            charCountEl.textContent = `${chars} character${chars !== 1 ? 's' : ''}`;
+        }
+    } catch (error) {
+        debugError('Error updating editor stats:', error);
+    }
+}
+
+/**
+ * Copy code from editor
+ */
+function copyCode() {
+    try {
+        const codeEditor = document.getElementById('codeEditor');
+        if (!codeEditor) {
+            notifications.warning('Code editor not found');
+            return;
+        }
+        
+        const code = codeEditor.value;
+        if (!code || code.trim() === '') {
+            notifications.warning('No code to copy');
+            return;
+        }
+        
+        copyToClipboard(code, 'Code copied to clipboard!');
+    } catch (error) {
+        debugError('Error copying code:', error);
+        notifications.error('Failed to copy code');
+    }
+}
+
+/**
  * Initialize application
  */
 document.addEventListener('DOMContentLoaded', function() {
@@ -385,6 +436,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Add keyboard shortcuts info
         addKeyboardShortcutsInfo();
+        
+        // Set up code editor stats updates
+        const codeEditor = document.getElementById('codeEditor');
+        if (codeEditor) {
+            codeEditor.addEventListener('input', updateEditorStats);
+            codeEditor.addEventListener('paste', () => setTimeout(updateEditorStats, 10));
+            // Initial update
+            updateEditorStats();
+        }
 
         debugLog('Application initialized successfully');
     } catch (error) {

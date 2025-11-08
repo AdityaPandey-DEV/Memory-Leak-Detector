@@ -97,16 +97,40 @@
                             </button>
                         </div>
                     </div>
-                    <label for="codeEditor" class="sr-only">Code Editor</label>
-                    <textarea id="codeEditor" 
-                              class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none font-mono text-sm" 
-                              placeholder="Enter your code here..." 
-                              spellcheck="false"
-                              aria-label="Code editor for entering source code"
-                              aria-describedby="editor-description"
-                              role="textbox"
-                              aria-multiline="true"></textarea>
-                    <p id="editor-description" class="sr-only">Enter your code in the selected programming language to analyze for memory leaks</p>
+                    <div class="code-editor-wrapper relative">
+                        <label for="codeEditor" class="sr-only">Code Editor</label>
+                        <div class="code-editor-container relative bg-gray-50 rounded-lg border-2 border-gray-300 overflow-hidden">
+                            <div class="code-editor-header bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-medium text-gray-600">Code Editor</span>
+                                    <span id="lineCount" class="text-xs text-gray-500">0 lines</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" 
+                                            onclick="copyCode()" 
+                                            class="text-xs text-gray-600 hover:text-gray-800 px-2 py-1 rounded transition"
+                                            aria-label="Copy code"
+                                            title="Copy code (Ctrl+C)">
+                                        📋 Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="codeEditor" 
+                                      class="w-full h-96 p-4 border-0 rounded-none code-editor focus:outline-none font-mono text-sm resize-none overflow-auto" 
+                                      placeholder="Enter your code here..." 
+                                      spellcheck="false"
+                                      aria-label="Code editor for entering source code"
+                                      aria-describedby="editor-description"
+                                      role="textbox"
+                                      aria-multiline="true"
+                                      wrap="off"></textarea>
+                            <div class="code-editor-footer bg-gray-100 border-t border-gray-200 px-4 py-1 flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Press Ctrl+S to analyze, Ctrl+K to clear</span>
+                                <span id="charCount" class="text-xs text-gray-500">0 characters</span>
+                            </div>
+                        </div>
+                        <p id="editor-description" class="sr-only">Enter your code in the selected programming language to analyze for memory leaks</p>
+                    </div>
                 </div>
             </section>
 
