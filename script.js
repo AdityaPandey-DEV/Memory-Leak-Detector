@@ -932,6 +932,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (languageSelect) {
         languageSelect.addEventListener('change', updateLanguage);
         selectedLanguage = languageSelect.value;
+        // Initialize placeholder on page load
+        updateLanguage();
     }
     
     // Make switchTab available globally for debugging
