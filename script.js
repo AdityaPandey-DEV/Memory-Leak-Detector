@@ -389,8 +389,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const exportBtn = document.createElement('button');
                 exportBtn.id = 'exportBtn';
                 exportBtn.onclick = exportAnalysis;
-                exportBtn.className = 'bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition';
-                exportBtn.innerHTML = '📥 Export';
+                exportBtn.className = 'btn-export bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition shadow-md hover:shadow-lg flex items-center gap-2';
+                exportBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Export</span>
+                `;
                 exportBtn.title = 'Export analysis results to JSON (Ctrl+E)';
                 exportBtn.setAttribute('aria-label', 'Export analysis results');
                 analyzeBtn.parentElement.insertBefore(exportBtn, analyzeBtn.nextSibling);
@@ -407,8 +412,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         notifications.warning('No analysis to share');
                     }
                 };
-                shareBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition';
-                shareBtn.innerHTML = '🔗 Share';
+                shareBtn.className = 'btn-share bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition shadow-md hover:shadow-lg flex items-center gap-2';
+                shareBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                    <span>Share</span>
+                `;
                 shareBtn.title = 'Share analysis results';
                 shareBtn.setAttribute('aria-label', 'Share analysis results');
                 const exportBtn = document.getElementById('exportBtn');

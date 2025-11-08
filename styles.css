@@ -228,7 +228,17 @@ button.bg-green-500,
 button.bg-red-500,
 button.bg-purple-500,
 button.bg-orange-500,
-button.bg-yellow-500 {
+button.bg-yellow-500,
+button.bg-emerald-600,
+button.bg-indigo-600,
+button.bg-rose-600,
+button.bg-violet-600,
+button.bg-cyan-600,
+.btn-load-sample,
+.btn-analyze,
+.btn-clear,
+.btn-export,
+.btn-share {
     min-height: 44px !important;
     height: 44px !important;
     padding: 0.75rem 1.5rem !important;
@@ -238,6 +248,63 @@ button.bg-yellow-500 {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Professional button colors */
+.btn-load-sample {
+    background-color: #059669 !important;
+    border: 1px solid #047857;
+}
+
+.btn-load-sample:hover {
+    background-color: #047857 !important;
+    border-color: #065f46;
+    box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.3);
+}
+
+.btn-analyze {
+    background-color: #4F46E5 !important;
+    border: 1px solid #4338CA;
+}
+
+.btn-analyze:hover {
+    background-color: #4338CA !important;
+    border-color: #3730A3;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.btn-clear {
+    background-color: #E11D48 !important;
+    border: 1px solid #BE185D;
+}
+
+.btn-clear:hover {
+    background-color: #BE185D !important;
+    border-color: #9F1239;
+    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.3);
+}
+
+.btn-export {
+    background-color: #7C3AED !important;
+    border: 1px solid #6D28D9;
+}
+
+.btn-export:hover {
+    background-color: #6D28D9 !important;
+    border-color: #5B21B6;
+    box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3);
+}
+
+.btn-share {
+    background-color: #0891B2 !important;
+    border: 1px solid #0E7490;
+}
+
+.btn-share:hover {
+    background-color: #0E7490 !important;
+    border-color: #155E75;
+    box-shadow: 0 4px 6px -1px rgba(8, 145, 178, 0.3);
 }
 
 /* Smaller buttons */
@@ -474,7 +541,17 @@ canvas {
     .flex.gap-2.items-center button.bg-red-500,
     .flex.gap-2.items-center button.bg-purple-500,
     .flex.gap-2.items-center button.bg-orange-500,
-    .flex.gap-2.items-center button.bg-yellow-500 {
+    .flex.gap-2.items-center button.bg-yellow-500,
+    .flex.gap-2.items-center button.bg-emerald-600,
+    .flex.gap-2.items-center button.bg-indigo-600,
+    .flex.gap-2.items-center button.bg-rose-600,
+    .flex.gap-2.items-center button.bg-violet-600,
+    .flex.gap-2.items-center button.bg-cyan-600,
+    .flex.gap-2.items-center .btn-load-sample,
+    .flex.gap-2.items-center .btn-analyze,
+    .flex.gap-2.items-center .btn-clear,
+    .flex.gap-2.items-center .btn-export,
+    .flex.gap-2.items-center .btn-share {
         min-height: 42px !important;
         height: 42px !important;
         padding: 0.75rem 1.25rem !important;
@@ -636,6 +713,72 @@ canvas {
     background-color: #6D28D9 !important;
     border-color: #7C3AED;
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Dark mode professional buttons */
+.dark-mode .btn-load-sample,
+.dark .btn-load-sample {
+    background-color: #047857 !important;
+    border-color: #065f46 !important;
+}
+
+.dark-mode .btn-load-sample:hover,
+.dark .btn-load-sample:hover {
+    background-color: #065f46 !important;
+    border-color: #064e3b !important;
+    box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.4);
+}
+
+.dark-mode .btn-analyze,
+.dark .btn-analyze {
+    background-color: #4338CA !important;
+    border-color: #3730A3 !important;
+}
+
+.dark-mode .btn-analyze:hover,
+.dark .btn-analyze:hover {
+    background-color: #3730A3 !important;
+    border-color: #312E81 !important;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+}
+
+.dark-mode .btn-clear,
+.dark .btn-clear {
+    background-color: #BE185D !important;
+    border-color: #9F1239 !important;
+}
+
+.dark-mode .btn-clear:hover,
+.dark .btn-clear:hover {
+    background-color: #9F1239 !important;
+    border-color: #881337 !important;
+    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.4);
+}
+
+.dark-mode .btn-export,
+.dark .btn-export {
+    background-color: #6D28D9 !important;
+    border-color: #5B21B6 !important;
+}
+
+.dark-mode .btn-export:hover,
+.dark .btn-export:hover {
+    background-color: #5B21B6 !important;
+    border-color: #4C1D95 !important;
+    box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.4);
+}
+
+.dark-mode .btn-share,
+.dark .btn-share {
+    background-color: #0E7490 !important;
+    border-color: #155E75 !important;
+}
+
+.dark-mode .btn-share:hover,
+.dark .btn-share:hover {
+    background-color: #155E75 !important;
+    border-color: #164E63 !important;
+    box-shadow: 0 4px 6px -1px rgba(8, 145, 178, 0.4);
 }
 
 .dark-mode .bg-orange-500,
