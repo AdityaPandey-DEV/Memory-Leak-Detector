@@ -133,60 +133,70 @@ function performAnalysis(code) {
         }
 
         // Detect malloc/calloc/realloc - more flexible patterns
-        // Pattern 1: var = (type*)malloc(...)
-        // Pattern 2: var = malloc(...)
-        // Pattern 3: var = (type*)calloc(...)
-        // Pattern 4: var = (type*)realloc(...)
+        // Pattern 1: type *var = malloc(...) - matches "char *p = malloc(128)"
+        // Pattern 2: type* var = malloc(...) - matches "char* p = malloc(128)"
+        // Pattern 3: var = (type*)malloc(...)
+        // Pattern 4: var = malloc(...)
+        // Pattern 5: var = (type*)calloc(...)
+        // Pattern 6: var = (type*)realloc(...)
         const mallocPatterns = [
-            /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/,  // with cast
-            /(\w+)\s*=\s*(malloc|calloc|realloc)\s*\([^)]+\)/,              // without cast
-            /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/     // alternative cast format
+            /\w+\s+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\([^)]+\)/,      // type *var = malloc(...)
+            /\w+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\([^)]+\)/,         // type* var = malloc(...)
+            /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/,     // var = (type*)malloc(...)
+            /(\w+)\s*=\s*(malloc|calloc|realloc)\s*\([^)]+\)/,                 // var = malloc(...)
         ];
         
         let mallocMatch = null;
+        let varName = null;
+        let func = null;
+        
         for (const pattern of mallocPatterns) {
             mallocMatch = trimmed.match(pattern);
-            if (mallocMatch) break;
+            if (mallocMatch) {
+                varName = mallocMatch[1];
+                func = mallocMatch[2];
+                break;
+            }
         }
 
-        if (mallocMatch) {
-            const varName = mallocMatch[1];
-            const func = mallocMatch[2];
+        if (mallocMatch && varName && func) {
             
             // Extract size - handle various patterns
             let size = 1;
-            const sizePatterns = [
-                /sizeof\s*\([^)]+\)\s*\*\s*(\d+)/,      // sizeof(type) * n
-                /(\d+)\s*\*\s*sizeof\s*\([^)]+\)/,      // n * sizeof(type)
-                /(\d+)\s*\*\s*sizeof/,                   // n * sizeof
-                /malloc\s*\(\s*(\d+)\s*\)/,              // malloc(n)
-                /calloc\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)/,  // calloc(n, size)
-                /malloc\s*\(\s*(\d+)\s*\*\s*sizeof/,     // malloc(n * sizeof
-                /(\d+)\s*\)/                              // just a number before closing paren
-            ];
             
-            for (const sizePattern of sizePatterns) {
-                const sizeMatch = trimmed.match(sizePattern);
-                if (sizeMatch) {
-                    // For calloc, multiply both arguments
-                    if (sizeMatch[2]) {
-                        size = (parseInt(sizeMatch[1]) || 1) * (parseInt(sizeMatch[2]) || 1);
-                    } else {
-                        size = parseInt(sizeMatch[1]) || 1;
+            // First, try to extract from the function call arguments
+            const funcCallMatch = trimmed.match(/(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/);
+            if (funcCallMatch && funcCallMatch[2]) {
+                const args = funcCallMatch[2].trim();
+                
+                // Handle calloc(n, size) - multiply both arguments
+                const callocMatch = args.match(/(\d+)\s*,\s*(\d+)/);
+                if (callocMatch) {
+                    size = (parseInt(callocMatch[1]) || 1) * (parseInt(callocMatch[2]) || 1);
+                } else {
+                    // Handle sizeof patterns
+                    const sizeofPatterns = [
+                        /sizeof\s*\([^)]+\)\s*\*\s*(\d+)/,      // sizeof(type) * n
+                        /(\d+)\s*\*\s*sizeof\s*\([^)]+\)/,      // n * sizeof(type)
+                        /(\d+)\s*\*\s*sizeof/,                   // n * sizeof
+                    ];
+                    
+                    let found = false;
+                    for (const pattern of sizeofPatterns) {
+                        const match = args.match(pattern);
+                        if (match) {
+                            size = parseInt(match[1]) || 1;
+                            found = true;
+                            break;
+                        }
                     }
-                    break;
-                }
-            }
-            
-            // If no size found, try to extract from malloc/calloc arguments
-            if (size === 1) {
-                const argMatch = trimmed.match(/(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/);
-                if (argMatch && argMatch[2]) {
-                    const args = argMatch[2];
-                    // Try to find a number in the arguments
-                    const numMatch = args.match(/(\d+)/);
-                    if (numMatch) {
-                        size = parseInt(numMatch[1]) || 1;
+                    
+                    // If no sizeof pattern, just look for a number
+                    if (!found) {
+                        const numMatch = args.match(/(\d+)/);
+                        if (numMatch) {
+                            size = parseInt(numMatch[1]) || 1;
+                        }
                     }
                 }
             }
