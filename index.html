@@ -52,11 +52,11 @@
     </header>
 
     <main id="main-content" class="container mx-auto px-4 py-6" role="main">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
             <!-- Left Column: Code Editor -->
-            <section class="lg:col-span-2" aria-labelledby="editor-heading">
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <div class="flex justify-between items-center mb-4">
+            <section class="lg:col-span-2 flex flex-col" aria-labelledby="editor-heading">
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col flex-1 min-h-0">
+                    <div class="flex justify-between items-center mb-4 flex-shrink-0">
                         <h2 id="editor-heading" class="text-2xl font-semibold text-gray-800">Code Editor</h2>
                         <div class="flex gap-2 items-center" role="toolbar" aria-label="Editor actions">
                             <div class="flex items-center gap-2">
@@ -97,10 +97,10 @@
                             </button>
                         </div>
                     </div>
-                    <div class="code-editor-wrapper relative">
+                    <div class="code-editor-wrapper relative flex-1 min-h-0 flex flex-col">
                         <label for="codeEditor" class="sr-only">Code Editor</label>
-                        <div class="code-editor-container relative bg-gray-50 rounded-lg border-2 border-gray-300 overflow-hidden">
-                            <div class="code-editor-header bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+                        <div class="code-editor-container relative bg-gray-50 rounded-lg border-2 border-gray-300 overflow-hidden flex flex-col flex-1 min-h-0">
+                            <div class="code-editor-header bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center justify-between flex-shrink-0">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs font-medium text-gray-600">Code Editor</span>
                                     <span id="lineCount" class="text-xs text-gray-500">0 lines</span>
@@ -116,7 +116,7 @@
                                 </div>
                             </div>
                             <textarea id="codeEditor" 
-                                      class="w-full h-96 p-4 border-0 rounded-none code-editor focus:outline-none font-mono text-sm resize-none overflow-auto" 
+                                      class="w-full flex-1 min-h-0 p-4 border-0 rounded-none code-editor focus:outline-none font-mono text-sm resize-none overflow-auto" 
                                       placeholder="Enter your code here..." 
                                       spellcheck="false"
                                       aria-label="Code editor for entering source code"
@@ -124,7 +124,7 @@
                                       role="textbox"
                                       aria-multiline="true"
                                       wrap="off"></textarea>
-                            <div class="code-editor-footer bg-gray-100 border-t border-gray-200 px-4 py-1 flex items-center justify-between">
+                            <div class="code-editor-footer bg-gray-100 border-t border-gray-200 px-4 py-1 flex items-center justify-between flex-shrink-0">
                                 <span class="text-xs text-gray-500">Press Ctrl+S to analyze, Ctrl+K to clear</span>
                                 <span id="charCount" class="text-xs text-gray-500">0 characters</span>
                             </div>

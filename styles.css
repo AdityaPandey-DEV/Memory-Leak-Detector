@@ -25,10 +25,18 @@
 /* ===== Code Editor Styles ===== */
 .code-editor-wrapper {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .code-editor-container {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     transition: var(--transition-base);
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
@@ -41,11 +49,13 @@
 .code-editor-header {
     user-select: none;
     transition: var(--transition-base);
+    flex-shrink: 0;
 }
 
 .code-editor-footer {
     user-select: none;
     transition: var(--transition-base);
+    flex-shrink: 0;
 }
 
 .code-editor {
@@ -55,8 +65,9 @@
     tab-size: 4;
     -moz-tab-size: 4;
     resize: none;
-    min-height: 384px;
-    max-height: 600px;
+    flex: 1;
+    min-height: 500px;
+    height: 100%;
     background-color: #FFFFFF;
     color: #1F2937;
     border: none;
@@ -471,12 +482,16 @@ canvas {
     }
     
     #codeEditor {
-        height: 300px !important;
-        min-height: 300px !important;
+        min-height: 400px !important;
+        height: auto !important;
         font-size: 13px;
         padding: 0.75rem 1rem !important;
         padding-left: 3rem !important;
         line-height: 1.6;
+    }
+    
+    .code-editor-wrapper {
+        min-height: 400px;
     }
     
     .code-editor-header,
@@ -529,7 +544,18 @@ canvas {
     }
     
     #codeEditor {
-        height: 400px;
+        min-height: 500px;
+    }
+}
+
+/* ===== Desktop Large Screens ===== */
+@media (min-width: 1025px) {
+    #codeEditor {
+        min-height: 600px;
+    }
+    
+    .code-editor-wrapper {
+        min-height: 600px;
     }
 }
 
