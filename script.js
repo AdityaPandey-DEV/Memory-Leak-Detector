@@ -524,7 +524,7 @@ class MemoryAnalyzer {
         const rustPatterns = [
             /let\s+(?:mut\s+)?(\w+)\s*=\s*Vec::new\s*\(/,                        // let vec = Vec::new()
             /let\s+(?:mut\s+)?(\w+)\s*=\s*vec!\s*\[/,                             // let vec = vec![]
-            /let\s+(?:mut\s+)?(\w+)\s*=\s*vec!\s*\[[^\]]*\]\s*;\s*(\d+)/,        // let vec = vec![0; n]
+            /let\s+(?:mut\s+)?(\w+)\s*=\s*vec!\s*\[[^\]]*;\s*(\d+)\s*\]/,        // let vec = vec![0; n]
             /let\s+(?:mut\s+)?(\w+)\s*=\s*Box::new\s*\(/,                        // let box = Box::new()
             /let\s+(?:mut\s+)?(\w+)\s*=\s*Rc::new\s*\(/,                         // let rc = Rc::new()
             /let\s+(?:mut\s+)?(\w+)\s*=\s*Arc::new\s*\(/,                        // let arc = Arc::new()
