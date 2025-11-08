@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Universal Memory Leak Detection and Code Analysis Tool">
+    <meta name="keywords" content="memory leak, code analyzer, static analysis, C, C++, JavaScript">
     <title>MLDA - Memory Leak Detector & Code Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -12,6 +14,50 @@
     <!-- AST Parser for JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/acorn@8/dist/acorn.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Mobile responsiveness improvements */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .flex.gap-2.items-center {
+                flex-wrap: wrap;
+            }
+            .flex.gap-2.items-center button {
+                flex: 1 1 auto;
+                min-width: 100px;
+            }
+            #codeEditor {
+                height: 300px !important;
+            }
+            .grid.grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+            .tab-btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+        /* Code editor improvements */
+        #codeEditor {
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+        /* Screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Header -->
@@ -56,8 +102,10 @@
                             </button>
                         </div>
                     </div>
-                    <textarea id="codeEditor" class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none" 
-                              placeholder="Enter your code here..."></textarea>
+                    <textarea id="codeEditor" class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none font-mono text-sm" 
+                              placeholder="Enter your code here..." 
+                              spellcheck="false"
+                              aria-label="Code editor for entering source code"></textarea>
                 </div>
             </div>
 
@@ -192,6 +240,11 @@
     <!-- Load modules in correct order -->
     <script src="config.js"></script>
     <script src="notifications.js"></script>
+    <script src="accessibility.js"></script>
+    <script src="clipboard.js"></script>
+    <script src="darkMode.js"></script>
+    <script src="history.js"></script>
+    <script src="share.js"></script>
     <script src="samples.js"></script>
     <script src="astParser.js"></script>
     <script src="memoryAnalyzer.js"></script>

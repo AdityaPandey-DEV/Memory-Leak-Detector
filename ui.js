@@ -125,30 +125,60 @@ function updateLeaksTab(analysis) {
             return;
         }
 
+        // Add filter/sort controls
+        if (analysis.leaks.length > 1) {
+            leaksList.innerHTML = `
+                <div class="mb-4 flex flex-wrap gap-2 items-center">
+                    <label class="text-sm font-medium text-gray-700">Sort by:</label>
+                    <select id="sortLeaks" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm" onchange="sortLeaks(this.value)">
+                        <option value="line">Line Number</option>
+                        <option value="size">Size (Largest First)</option>
+                        <option value="variable">Variable Name</option>
+                    </select>
+                    <label class="text-sm font-medium text-gray-700 ml-4">Filter:</label>
+                    <input type="text" id="filterLeaks" placeholder="Search leaks..." 
+                           class="bg-white border border-gray-300 rounded px-2 py-1 text-sm flex-1 max-w-xs"
+                           onkeyup="filterLeaks(this.value)">
+                    <button onclick="copyAnalysisResults(currentAnalysis)" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                        📋 Copy All
+                    </button>
+                </div>
+                <div id="leaksContainer" class="space-y-4">
+            `;
+        } else {
+            leaksList.innerHTML = '<div id="leaksContainer" class="space-y-4">';
+        }
+
         // Use textContent for safety, but we need HTML for formatting
         // So we'll escape user content
-        leaksList.innerHTML = analysis.leaks.map(leak => {
+        const leaksContainer = leaksList.querySelector('#leaksContainer') || leaksList;
+        const leaksHTML = analysis.leaks.map((leak, index) => {
             const varName = escapeHtml(leak.var || 'unknown');
             const line = leak.line || 0;
             const func = escapeHtml(leak.function || 'unknown');
             const size = formatBytes(leak.size || 0);
             const fix = escapeHtml(leak.fix || 'No fix available');
+            const leakJson = escapeHtml(JSON.stringify(leak));
             
-            return `
-                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">${varName}</code></h4>
-                            <p class="text-sm text-gray-600 mt-1">Line ${line} | Function: ${func}() | Size: ${size}</p>
-                        </div>
-                    </div>
-                    <div class="mt-3 bg-white p-3 rounded border border-red-200">
-                        <p class="text-sm font-semibold text-gray-700 mb-1">Fix/Solution:</p>
-                        <p class="text-sm text-gray-800">${fix}</p>
-                    </div>
-                </div>
-            `;
+            return '<div class="leak-item bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" data-line="' + line + '" data-size="' + (leak.size || 0) + '" data-variable="' + varName + '">' +
+                '<div class="flex justify-between items-start mb-2">' +
+                '<div class="flex-1">' +
+                '<h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">' + varName + '</code></h4>' +
+                '<p class="text-sm text-gray-600 mt-1">Line ' + line + ' | Function: ' + func + '() | Size: ' + size + '</p>' +
+                '</div>' +
+                '<button onclick="copyLeakDetails(' + leakJson.replace(/"/g, '&quot;') + ')" ' +
+                'class="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" ' +
+                'aria-label="Copy leak details">📋</button>' +
+                '</div>' +
+                '<div class="mt-3 bg-white p-3 rounded border border-red-200">' +
+                '<p class="text-sm font-semibold text-gray-700 mb-1">Fix/Solution:</p>' +
+                '<p class="text-sm text-gray-800">' + fix + '</p>' +
+                '</div>' +
+                '</div>';
         }).join('');
+        
+        leaksContainer.innerHTML = leaksHTML + '</div>';
     } catch (error) {
         debugError('Error updating leaks tab:', error);
         notifications.error('Failed to update leaks tab: ' + error.message);

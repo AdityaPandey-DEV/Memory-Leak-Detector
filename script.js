@@ -227,6 +227,15 @@ function performAnalysisInternal() {
         updateAnalysisTab(analysis);
         updateTimelineChart(analysis);
 
+        // Save to history
+        if (typeof saveToHistory === 'function') {
+            try {
+                saveToHistory(analysis, code, language);
+            } catch (error) {
+                debugError('Error saving to history:', error);
+            }
+        }
+
         // Show success message
         const leakCount = analysis.leaks.length;
         if (leakCount === 0) {
@@ -322,16 +331,40 @@ document.addEventListener('DOMContentLoaded', function() {
             debugWarn('Language select element not found');
         }
 
-        // Add export button if it doesn't exist
+        // Add export and share buttons if they don't exist
         const analyzeBtn = document.getElementById('analyzeBtn');
-        if (analyzeBtn && !document.getElementById('exportBtn')) {
-            const exportBtn = document.createElement('button');
-            exportBtn.id = 'exportBtn';
-            exportBtn.onclick = exportAnalysis;
-            exportBtn.className = 'bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition';
-            exportBtn.innerHTML = '📥 Export';
-            exportBtn.title = 'Export analysis results to JSON';
-            analyzeBtn.parentElement.insertBefore(exportBtn, analyzeBtn.nextSibling);
+        if (analyzeBtn) {
+            if (!document.getElementById('exportBtn')) {
+                const exportBtn = document.createElement('button');
+                exportBtn.id = 'exportBtn';
+                exportBtn.onclick = exportAnalysis;
+                exportBtn.className = 'bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition';
+                exportBtn.innerHTML = '📥 Export';
+                exportBtn.title = 'Export analysis results to JSON (Ctrl+E)';
+                exportBtn.setAttribute('aria-label', 'Export analysis results');
+                analyzeBtn.parentElement.insertBefore(exportBtn, analyzeBtn.nextSibling);
+            }
+
+            if (!document.getElementById('shareBtn') && typeof shareAnalysis === 'function') {
+                const shareBtn = document.createElement('button');
+                shareBtn.id = 'shareBtn';
+                shareBtn.onclick = () => {
+                    if (currentAnalysis) {
+                        const code = document.getElementById('codeEditor')?.value || '';
+                        shareAnalysis(currentAnalysis, code);
+                    } else {
+                        notifications.warning('No analysis to share');
+                    }
+                };
+                shareBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition';
+                shareBtn.innerHTML = '🔗 Share';
+                shareBtn.title = 'Share analysis results';
+                shareBtn.setAttribute('aria-label', 'Share analysis results');
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.parentElement.insertBefore(shareBtn, exportBtn.nextSibling);
+                }
+            }
         }
         
         // Make functions available globally for debugging
@@ -340,9 +373,101 @@ document.addEventListener('DOMContentLoaded', function() {
             window.exportAnalysis = exportAnalysis;
         }
 
+        // Initialize accessibility
+        if (typeof initAccessibility === 'function') {
+            initAccessibility();
+        }
+
+        // Initialize dark mode
+        if (typeof initDarkMode === 'function') {
+            initDarkMode();
+        }
+
+        // Add keyboard shortcuts info
+        addKeyboardShortcutsInfo();
+
         debugLog('Application initialized successfully');
     } catch (error) {
         debugError('Error initializing application:', error);
         notifications.error('Failed to initialize application: ' + error.message);
     }
 });
+
+/**
+ * Add keyboard shortcuts information
+ */
+function addKeyboardShortcutsInfo() {
+    // Add keyboard shortcuts tooltip or help section
+    const shortcuts = [
+        { key: 'Ctrl/Cmd + S', action: 'Analyze code' },
+        { key: 'Ctrl/Cmd + K', action: 'Clear editor' },
+        { key: 'Ctrl/Cmd + L', action: 'Load sample' },
+        { key: 'Ctrl/Cmd + E', action: 'Export results' },
+        { key: 'Ctrl/Cmd + D', action: 'Toggle dark mode' },
+        { key: 'Esc', action: 'Close notifications' }
+    ];
+
+    // Store shortcuts globally for help display
+    window.keyboardShortcuts = shortcuts;
+}
+
+/**
+ * Sort leaks by criteria
+ * @param {string} criteria - Sort criteria ('line', 'size', 'variable')
+ */
+function sortLeaks(criteria) {
+    try {
+        if (!currentAnalysis || !currentAnalysis.leaks) {
+            return;
+        }
+
+        const leaks = [...currentAnalysis.leaks];
+        
+        switch(criteria) {
+            case 'line':
+                leaks.sort((a, b) => (a.line || 0) - (b.line || 0));
+                break;
+            case 'size':
+                leaks.sort((a, b) => (b.size || 0) - (a.size || 0));
+                break;
+            case 'variable':
+                leaks.sort((a, b) => (a.var || '').localeCompare(b.var || ''));
+                break;
+        }
+
+        // Update current analysis with sorted leaks
+        currentAnalysis.leaks = leaks;
+        
+        // Re-render leaks tab
+        updateLeaksTab(currentAnalysis);
+        
+        debugLog('Leaks sorted by:', criteria);
+    } catch (error) {
+        debugError('Error sorting leaks:', error);
+        notifications.error('Failed to sort leaks');
+    }
+}
+
+/**
+ * Filter leaks by search term
+ * @param {string} searchTerm - Search term
+ */
+function filterLeaks(searchTerm) {
+    try {
+        const leakItems = document.querySelectorAll('.leak-item');
+        const term = searchTerm.toLowerCase().trim();
+        
+        leakItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (term === '' || text.includes(term)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        debugLog('Leaks filtered by:', searchTerm);
+    } catch (error) {
+        debugError('Error filtering leaks:', error);
+    }
+}
