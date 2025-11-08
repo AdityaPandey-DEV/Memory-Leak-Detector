@@ -22,6 +22,24 @@ function initDarkMode() {
 }
 
 /**
+ * Update dark mode toggle icons
+ */
+function updateDarkModeIcons(isDark) {
+    const darkIcon = document.getElementById('darkModeIcon');
+    const lightIcon = document.getElementById('lightModeIcon');
+    
+    if (darkIcon && lightIcon) {
+        if (isDark) {
+            darkIcon.classList.add('hidden');
+            lightIcon.classList.remove('hidden');
+        } else {
+            darkIcon.classList.remove('hidden');
+            lightIcon.classList.add('hidden');
+        }
+    }
+}
+
+/**
  * Set theme (light or dark)
  * @param {string} theme - 'light' or 'dark'
  */
@@ -31,13 +49,15 @@ function setTheme(theme) {
             document.documentElement.classList.add('dark');
             document.body.classList.add('dark-mode');
             localStorage.setItem('theme', 'dark');
+            updateDarkModeIcons(true);
         } else {
             document.documentElement.classList.remove('dark');
             document.body.classList.remove('dark-mode');
             localStorage.setItem('theme', 'light');
+            updateDarkModeIcons(false);
         }
         
-        // Update theme toggle button
+        // Update theme toggle button (for old button if exists)
         updateThemeToggleButton(theme);
         
         // Apply dark mode styles
@@ -61,7 +81,15 @@ function toggleDarkMode() {
  * Create theme toggle button
  */
 function createThemeToggle() {
-    // Check if button already exists
+    // Check if button already exists in HTML
+    const existingToggle = document.getElementById('darkModeToggle');
+    if (existingToggle) {
+        // Button already exists in HTML, just add event listener
+        existingToggle.addEventListener('click', toggleDarkMode);
+        return;
+    }
+
+    // Fallback: Create button if it doesn't exist (for backward compatibility)
     if (document.getElementById('themeToggle')) {
         return;
     }
@@ -81,14 +109,6 @@ function createThemeToggle() {
     
     themeToggle.addEventListener('click', toggleDarkMode);
     
-    // Add keyboard shortcut
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-            e.preventDefault();
-            toggleDarkMode();
-        }
-    });
-
     // Insert at the end of header
     const headerContent = header.querySelector('.container');
     if (headerContent) {
