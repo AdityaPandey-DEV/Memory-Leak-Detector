@@ -471,3 +471,29 @@ function filterLeaks(searchTerm) {
         debugError('Error filtering leaks:', error);
     }
 }
+
+/**
+ * Copy leak details from element
+ * @param {HTMLElement} button - Button element
+ */
+function copyLeakFromElement(button) {
+    try {
+        const leakItem = button.closest('.leak-item');
+        if (!leakItem) {
+            notifications.warning('Leak item not found');
+            return;
+        }
+
+        const leakData = leakItem.getAttribute('data-leak');
+        if (!leakData) {
+            notifications.warning('Leak data not found');
+            return;
+        }
+
+        const leak = JSON.parse(leakData);
+        copyLeakDetails(leak);
+    } catch (error) {
+        debugError('Error copying leak from element:', error);
+        notifications.error('Failed to copy leak details');
+    }
+}

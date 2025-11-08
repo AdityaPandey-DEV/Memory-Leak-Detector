@@ -161,13 +161,14 @@ function updateLeaksTab(analysis) {
             const fix = escapeHtml(leak.fix || 'No fix available');
             const leakJson = escapeHtml(JSON.stringify(leak));
             
-            return '<div class="leak-item bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" data-line="' + line + '" data-size="' + (leak.size || 0) + '" data-variable="' + varName + '">' +
+            const leakData = escapeHtml(JSON.stringify(leak));
+            return '<div class="leak-item bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" data-line="' + line + '" data-size="' + (leak.size || 0) + '" data-variable="' + varName + '" data-leak="' + leakData + '">' +
                 '<div class="flex justify-between items-start mb-2">' +
                 '<div class="flex-1">' +
                 '<h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">' + varName + '</code></h4>' +
                 '<p class="text-sm text-gray-600 mt-1">Line ' + line + ' | Function: ' + func + '() | Size: ' + size + '</p>' +
                 '</div>' +
-                '<button onclick="copyLeakDetails(' + leakJson.replace(/"/g, '&quot;') + ')" ' +
+                '<button onclick="copyLeakFromElement(this)" ' +
                 'class="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" ' +
                 'aria-label="Copy leak details">📋</button>' +
                 '</div>' +
