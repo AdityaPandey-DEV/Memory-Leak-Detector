@@ -496,7 +496,6 @@ class ASTParser {
 
     convertAcornAST(acornAST) {
         const nodes = [];
-        const self = this;
         
         const evaluateExpr = (node) => {
             if (node.type === 'Literal') {
@@ -600,24 +599,6 @@ class ASTParser {
             body: nodes,
             source: acornAST.source || ''
         };
-    }
-
-    evaluateExpression(node) {
-        if (node.type === 'Literal') {
-            return node.value;
-        }
-        if (node.type === 'Identifier') {
-            return node.name;
-        }
-        if (node.type === 'BinaryExpression') {
-            const left = this.evaluateExpression(node.left);
-            const right = this.evaluateExpression(node.right);
-            if (typeof left === 'number' && typeof right === 'number') {
-                if (node.operator === '*') return left * right;
-                if (node.operator === '+') return left + right;
-            }
-        }
-        return null;
     }
 
     // Parse C/C++ code into AST-like structure
@@ -971,15 +952,18 @@ class MemoryAnalyzer {
             if (numMatch) {
                 return parseInt(numMatch[1]) || 1;
             }
-        } else if (this.language === 'cpp') {
-            if (astNode.function === 'new[]') {
-                const arrayMatch = args.match(/(\d+)/);
-                if (arrayMatch) {
-                    const count = parseInt(arrayMatch[1]) || 1;
-                    return count * 4; // Default type size
+            
+            // Handle C++ new patterns
+            if (this.language === 'cpp') {
+                if (astNode.function === 'new[]') {
+                    const arrayMatch = args.match(/(\d+)/);
+                    if (arrayMatch) {
+                        const count = parseInt(arrayMatch[1]) || 1;
+                        return count * 4; // Default type size
+                    }
+                } else if (astNode.function === 'new') {
+                    return 4; // Default object size
                 }
-            } else if (astNode.function === 'new') {
-                return 4; // Default object size
             }
         } else if (this.language === 'javascript') {
             if (Array.isArray(astNode.args)) {
