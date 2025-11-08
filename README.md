@@ -175,6 +175,8 @@ Developed by a 4-member B.Tech team for 5th semester Operating Systems course.
 
 ## 📝 License
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 This project is developed for educational purposes as part of the B.Tech curriculum.
 
 ## 🤝 Contributing
