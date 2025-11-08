@@ -421,30 +421,34 @@ function sortLeaks(criteria) {
             return;
         }
 
-        const leaks = [...currentAnalysis.leaks];
+        // Create a new array and sort it
+        const sortedLeaks = [...currentAnalysis.leaks];
         
         switch(criteria) {
             case 'line':
-                leaks.sort((a, b) => (a.line || 0) - (b.line || 0));
+                sortedLeaks.sort((a, b) => (a.line || 0) - (b.line || 0));
                 break;
             case 'size':
-                leaks.sort((a, b) => (b.size || 0) - (a.size || 0));
+                sortedLeaks.sort((a, b) => (b.size || 0) - (a.size || 0));
                 break;
             case 'variable':
-                leaks.sort((a, b) => (a.var || '').localeCompare(b.var || ''));
+                sortedLeaks.sort((a, b) => (a.var || '').localeCompare(b.var || ''));
                 break;
         }
 
-        // Update current analysis with sorted leaks
-        currentAnalysis.leaks = leaks;
+        // Create a new analysis object with sorted leaks instead of modifying the original
+        const sortedAnalysis = {
+            ...currentAnalysis,
+            leaks: sortedLeaks
+        };
         
-        // Re-render leaks tab
-        updateLeaksTab(currentAnalysis);
+        // Re-render leaks tab with sorted analysis
+        updateLeaksTab(sortedAnalysis);
         
         debugLog('Leaks sorted by:', criteria);
     } catch (error) {
         debugError('Error sorting leaks:', error);
-        notifications.error('Failed to sort leaks');
+        notifications.error('Failed to sort leaks: ' + error.message);
     }
 }
 
