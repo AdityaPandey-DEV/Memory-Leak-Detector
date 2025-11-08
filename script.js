@@ -199,15 +199,15 @@ class MemoryAnalyzer {
     }
 
     detectAllocation(line, lineNum, originalLine) {
-        // Comprehensive allocation patterns
-        const patterns = [
+        // C-style allocation patterns (malloc/calloc/realloc)
+        const cPatterns = [
             /\w+\s+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/,  // type *var = malloc(...)
             /\w+\*\s*(\w+)\s*=\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/,     // type* var = malloc(...)
             /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/, // var = (type*)malloc(...)
             /(\w+)\s*=\s*(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/,             // var = malloc(...)
         ];
 
-        for (const pattern of patterns) {
+        for (const pattern of cPatterns) {
             const match = line.match(pattern);
             if (match) {
                 const varName = match[1];
@@ -225,11 +225,74 @@ class MemoryAnalyzer {
                     inLoop: this.controlFlow.inLoop,
                     inFunction: this.controlFlow.inFunction,
                     functionName: this.controlFlow.functionName,
-                    allocId: `${varName}_line${lineNum}_${Date.now()}`
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'C'
+                };
+            }
+        }
+
+        // C++ allocation patterns (new/new[])
+        const cppPatterns = [
+            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,              // type *var = new Type(...)
+            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+/,                                  // type *var = new Type
+            /\w+\s*\*\s*(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,            // type *var = new Type[n]
+            /(\w+)\s*=\s*new\s+\w+\s*\(\s*([^)]*)\s*\)/,                        // var = new Type(...)
+            /(\w+)\s*=\s*new\s+\w+/,                                            // var = new Type
+            /(\w+)\s*=\s*new\s+\w+\s*\[\s*([^\]]+)\s*\]/,                      // var = new Type[n]
+        ];
+
+        for (const pattern of cppPatterns) {
+            const match = line.match(pattern);
+            if (match) {
+                const varName = match[1];
+                const args = match[2] || '';
+                const isArray = line.includes('[') && line.includes(']');
+                
+                const size = this.calculateCppSize(line, args, isArray);
+                
+                return {
+                    var: varName,
+                    line: lineNum,
+                    function: isArray ? 'new[]' : 'new',
+                    size: size,
+                    lineText: originalLine.trim(),
+                    inLoop: this.controlFlow.inLoop,
+                    inFunction: this.controlFlow.inFunction,
+                    functionName: this.controlFlow.functionName,
+                    allocId: `${varName}_line${lineNum}_${Date.now()}`,
+                    language: 'C++'
                 };
             }
         }
         return null;
+    }
+
+    calculateCppSize(line, args, isArray) {
+        if (isArray) {
+            // Array allocation: new Type[n]
+            const arrayMatch = line.match(/\[\s*(\d+)\s*\]/);
+            if (arrayMatch) {
+                const count = parseInt(arrayMatch[1]) || 1;
+                // Try to detect type size from the line
+                const typeSize = this.detectCppTypeSize(line);
+                return count * typeSize;
+            }
+            return 4; // default
+        } else {
+            // Single object allocation: new Type or new Type(...)
+            return this.detectCppTypeSize(line);
+        }
+    }
+
+    detectCppTypeSize(line) {
+        // Detect C++ type sizes
+        if (line.match(/\b(char|unsigned char|signed char)\b/)) return 1;
+        if (line.match(/\b(short|unsigned short)\b/)) return 2;
+        if (line.match(/\b(int|unsigned int|float|long)\b/)) return 4;
+        if (line.match(/\b(double|long long|unsigned long long)\b/)) return 8;
+        if (line.match(/\b(long double)\b/)) return 16;
+        // Default for unknown types
+        return 4;
     }
 
     calculateSize(args, line) {
@@ -312,14 +375,42 @@ class MemoryAnalyzer {
     }
 
     detectFree(line, lineNum, originalLine) {
+        // C-style free
         const freeMatch = line.match(/free\s*\(\s*(\w+)\s*\)/);
         if (freeMatch) {
             return {
                 var: freeMatch[1],
                 line: lineNum,
-                lineText: originalLine.trim()
+                lineText: originalLine.trim(),
+                language: 'C',
+                isArray: false
             };
         }
+
+        // C++ delete
+        const deleteMatch = line.match(/delete\s+(\w+)/);
+        if (deleteMatch) {
+            return {
+                var: deleteMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'C++',
+                isArray: false
+            };
+        }
+
+        // C++ delete[]
+        const deleteArrayMatch = line.match(/delete\s*\[\s*\]\s*(\w+)/);
+        if (deleteArrayMatch) {
+            return {
+                var: deleteArrayMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'C++',
+                isArray: true
+            };
+        }
+
         return null;
     }
 
