@@ -960,134 +960,150 @@ canvas {
     background-color: #818CF8;
 }
 
-/* Dark mode general styles */
-.dark-mode,
-.dark {
-    background-color: #111827 !important;
-    color: #F9FAFB !important;
-}
-
+/* Dark mode general styles - using CSS variables */
 .dark-mode .bg-white,
 .dark .bg-white {
-    background-color: #1F2937 !important;
-    color: #F9FAFB !important;
-    border-color: #374151 !important;
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
 }
 
 .dark-mode .bg-gray-100,
 .dark .bg-gray-100 {
-    background-color: #111827 !important;
+    background-color: var(--bg-secondary) !important;
 }
 
 .dark-mode .bg-gray-50,
 .dark .bg-gray-50 {
-    background-color: #1F2937 !important;
+    background-color: var(--bg-tertiary) !important;
 }
 
 .dark-mode .text-gray-800,
 .dark .text-gray-800 {
-    color: #F9FAFB !important;
+    color: var(--text-primary) !important;
 }
 
 .dark-mode .text-gray-700,
 .dark .text-gray-700 {
-    color: #D1D5DB !important;
+    color: var(--text-secondary) !important;
 }
 
 .dark-mode .text-gray-600,
 .dark .text-gray-600 {
-    color: #9CA3AF !important;
+    color: var(--text-tertiary) !important;
 }
 
 .dark-mode .text-gray-500,
 .dark .text-gray-500 {
-    color: #6B7280 !important;
+    color: #94A3B8 !important;
 }
 
 .dark-mode .border-gray-300,
 .dark .border-gray-300 {
-    border-color: #4B5563 !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark-mode .border-gray-200,
+.dark .border-gray-200 {
+    border-color: var(--border-light) !important;
 }
 
 .dark-mode textarea,
 .dark textarea {
-    background-color: #1F2937 !important;
-    color: #F9FAFB !important;
-    border-color: #4B5563 !important;
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
 }
 
 .dark-mode textarea:focus,
 .dark textarea:focus {
-    border-color: #60A5FA !important;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1) !important;
-    background-color: #111827 !important;
+    background-color: var(--bg-card) !important;
+    border-color: #6366F1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
 .dark-mode select,
 .dark select {
-    background-color: #1F2937 !important;
-    color: #F9FAFB !important;
-    border-color: #4B5563 !important;
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
 }
 
 .dark-mode select:focus,
 .dark select:focus {
-    border-color: #60A5FA !important;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1) !important;
+    background-color: var(--bg-card) !important;
+    border-color: #6366F1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
 .dark-mode select:hover,
 .dark select:hover {
-    border-color: #60A5FA !important;
+    background-color: var(--bg-tertiary) !important;
 }
 
-/* Dark mode stat cards */
+/* Dark mode stat cards - improved colors with better contrast */
 .dark-mode .bg-blue-50,
-.dark .bg-blue-50 {
-    background-color: #1E3A5F !important;
-    border-left-color: #3B82F6 !important;
+.dark .bg-blue-50,
+.dark-mode .bg-gradient-to-br.from-blue-50,
+.dark .bg-gradient-to-br.from-blue-50 {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(30, 64, 175, 0.2) 100%) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
 .dark-mode .bg-green-50,
-.dark .bg-green-50 {
-    background-color: #1E4D2E !important;
-    border-left-color: #10B981 !important;
+.dark .bg-green-50,
+.dark-mode .bg-gradient-to-br.from-green-50,
+.dark .bg-gradient-to-br.from-green-50 {
+    background: linear-gradient(135deg, rgba(20, 83, 45, 0.3) 0%, rgba(22, 101, 52, 0.2) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
 }
 
 .dark-mode .bg-red-50,
-.dark .bg-red-50 {
-    background-color: #4D1E1E !important;
-    border-left-color: #EF4444 !important;
+.dark .bg-red-50,
+.dark-mode .bg-gradient-to-br.from-red-50,
+.dark .bg-gradient-to-br.from-red-50 {
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.3) 0%, rgba(185, 28, 28, 0.2) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
 .dark-mode .bg-orange-50,
-.dark .bg-orange-50 {
-    background-color: #4D2E1E !important;
-    border-left-color: #F59E0B !important;
+.dark .bg-orange-50,
+.dark-mode .bg-gradient-to-br.from-orange-50,
+.dark .bg-gradient-to-br.from-orange-50 {
+    background: linear-gradient(135deg, rgba(154, 52, 18, 0.3) 0%, rgba(194, 65, 12, 0.2) 100%) !important;
+    border-color: rgba(249, 115, 22, 0.3) !important;
 }
 
 .dark-mode .bg-purple-50,
-.dark .bg-purple-50 {
-    background-color: #3D1E4D !important;
-    border-left-color: #8B5CF6 !important;
+.dark .bg-purple-50,
+.dark-mode .bg-gradient-to-br.from-purple-50,
+.dark .bg-gradient-to-br.from-purple-50 {
+    background: linear-gradient(135deg, rgba(107, 33, 168, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%) !important;
+    border-color: rgba(168, 85, 247, 0.3) !important;
 }
 
 .dark-mode .bg-yellow-50,
 .dark .bg-yellow-50 {
-    background-color: #4D3D1E !important;
-    border-left-color: #EAB308 !important;
+    background: linear-gradient(135deg, rgba(161, 98, 7, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%) !important;
+    border-color: rgba(234, 179, 8, 0.3) !important;
 }
 
 .dark-mode .bg-indigo-50,
 .dark .bg-indigo-50 {
-    background-color: #1E1E4D !important;
-    border-left-color: #6366F1 !important;
+    background: linear-gradient(135deg, rgba(55, 48, 163, 0.3) 0%, rgba(67, 56, 202, 0.2) 100%) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
 }
 
 .dark-mode .bg-teal-50,
 .dark .bg-teal-50 {
-    background-color: #1E4D4D !important;
-    border-left-color: #14B8A6 !important;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.3) 0%, rgba(20, 184, 166, 0.2) 100%) !important;
+    border-color: rgba(45, 212, 191, 0.3) !important;
+}
+
+.dark-mode .bg-cyan-50,
+.dark .bg-cyan-50 {
+    background: linear-gradient(135deg, rgba(14, 116, 144, 0.3) 0%, rgba(8, 145, 178, 0.2) 100%) !important;
+    border-color: rgba(34, 211, 238, 0.3) !important;
 }
 
 /* Dark mode code editor */
