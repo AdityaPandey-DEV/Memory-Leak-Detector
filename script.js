@@ -697,7 +697,33 @@ class MemoryAnalyzer {
     }
 
     detectFree(line, lineNum, originalLine) {
-        // C-style free
+        // Route to language-specific detection
+        switch(this.language) {
+            case 'c':
+                return this.detectCFree(line, lineNum, originalLine);
+            case 'cpp':
+                return this.detectCppFree(line, lineNum, originalLine) || 
+                       this.detectCFree(line, lineNum, originalLine); // C++ can also use C patterns
+            case 'javascript':
+                return this.detectJavaScriptFree(line, lineNum, originalLine);
+            case 'python':
+                return this.detectPythonFree(line, lineNum, originalLine);
+            case 'java':
+                return this.detectJavaFree(line, lineNum, originalLine);
+            case 'rust':
+                return this.detectRustFree(line, lineNum, originalLine);
+            case 'go':
+                return this.detectGoFree(line, lineNum, originalLine);
+            default:
+                // Try all patterns for unknown languages
+                return this.detectCppFree(line, lineNum, originalLine) ||
+                       this.detectCFree(line, lineNum, originalLine) ||
+                       this.detectJavaScriptFree(line, lineNum, originalLine);
+        }
+    }
+
+    // C deallocation (free)
+    detectCFree(line, lineNum, originalLine) {
         const freeMatch = line.match(/free\s*\(\s*(\w+)\s*\)/);
         if (freeMatch) {
             return {
@@ -708,20 +734,12 @@ class MemoryAnalyzer {
                 isArray: false
             };
         }
+        return null;
+    }
 
-        // C++ delete (handle both delete p and delete(p))
-        const deleteMatch = line.match(/delete\s+(?:\(\s*)?(\w+)(?:\s*\))?/);
-        if (deleteMatch) {
-            return {
-                var: deleteMatch[1],
-                line: lineNum,
-                lineText: originalLine.trim(),
-                language: 'C++',
-                isArray: false
-            };
-        }
-
-        // C++ delete[] (handle both delete[] p and delete[](p))
+    // C++ deallocation (delete/delete[])
+    detectCppFree(line, lineNum, originalLine) {
+        // C++ delete[]
         const deleteArrayMatch = line.match(/delete\s*\[\s*\]\s*(?:\(\s*)?(\w+)(?:\s*\))?/);
         if (deleteArrayMatch) {
             return {
@@ -733,6 +751,107 @@ class MemoryAnalyzer {
             };
         }
 
+        // C++ delete
+        const deleteMatch = line.match(/delete\s+(?:\(\s*)?(\w+)(?:\s*\))?/);
+        if (deleteMatch) {
+            return {
+                var: deleteMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'C++',
+                isArray: false
+            };
+        }
+        return null;
+    }
+
+    // JavaScript deallocation (null assignment, delete operator)
+    detectJavaScriptFree(line, lineNum, originalLine) {
+        const patterns = [
+            /(\w+)\s*=\s*null/,                          // var = null
+            /(\w+)\s*=\s*undefined/,                     // var = undefined
+            /delete\s+(\w+)/,                            // delete var
+        ];
+
+        for (const pattern of patterns) {
+            const match = line.match(pattern);
+            if (match) {
+                return {
+                    var: match[1],
+                    line: lineNum,
+                    lineText: originalLine.trim(),
+                    language: 'JavaScript',
+                    isArray: false
+                };
+            }
+        }
+        return null;
+    }
+
+    // Python deallocation (del statement)
+    detectPythonFree(line, lineNum, originalLine) {
+        const delMatch = line.match(/del\s+(\w+)/);
+        if (delMatch) {
+            return {
+                var: delMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'Python',
+                isArray: false
+            };
+        }
+        return null;
+    }
+
+    // Java deallocation (null assignment - GC handles it)
+    detectJavaFree(line, lineNum, originalLine) {
+        const nullMatch = line.match(/(\w+)\s*=\s*null/);
+        if (nullMatch) {
+            return {
+                var: nullMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'Java',
+                isArray: false
+            };
+        }
+        return null;
+    }
+
+    // Rust deallocation (drop, explicit deallocation)
+    detectRustFree(line, lineNum, originalLine) {
+        const patterns = [
+            /drop\s*\(\s*(\w+)\s*\)/,                    // drop(var)
+            /(\w+)\s*\.\s*drop\s*\(/,                    // var.drop()
+        ];
+
+        for (const pattern of patterns) {
+            const match = line.match(pattern);
+            if (match) {
+                return {
+                    var: match[1],
+                    line: lineNum,
+                    lineText: originalLine.trim(),
+                    language: 'Rust',
+                    isArray: false
+                };
+            }
+        }
+        return null;
+    }
+
+    // Go deallocation (nil assignment - GC handles it)
+    detectGoFree(line, lineNum, originalLine) {
+        const nilMatch = line.match(/(\w+)\s*=\s*nil/);
+        if (nilMatch) {
+            return {
+                var: nilMatch[1],
+                line: lineNum,
+                lineText: originalLine.trim(),
+                language: 'Go',
+                isArray: false
+            };
+        }
         return null;
     }
 
