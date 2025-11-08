@@ -93,6 +93,17 @@ function analyzeCode() {
     updateTimelineChart(analysis);
 }
 
+// Helper function to remove comments from a line
+function removeComments(line) {
+    // Remove // comments
+    let cleaned = line.replace(/\/\/.*$/, '');
+    
+    // Remove /* */ comments (single line)
+    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+    
+    return cleaned.trim();
+}
+
 function performAnalysis(code) {
     const lines = code.split('\n');
     const analysis = {
@@ -109,30 +120,113 @@ function performAnalysis(code) {
 
     lines.forEach((line, index) => {
         lineNum = index + 1;
-        const trimmed = line.trim();
+        const originalLine = line;
+        const trimmed = removeComments(line); // Remove comments before processing
+        
+        // Skip empty lines after comment removal
+        if (!trimmed) {
+            analysis.timeline.push({
+                line: lineNum,
+                memory: currentMemory
+            });
+            return;
+        }
 
-        // Detect malloc/calloc/realloc
-        const mallocMatch = trimmed.match(/(\w+)\s*=\s*\([^)]+\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/);
+        // Detect malloc/calloc/realloc - more flexible patterns
+        // Pattern 1: var = (type*)malloc(...)
+        // Pattern 2: var = malloc(...)
+        // Pattern 3: var = (type*)calloc(...)
+        // Pattern 4: var = (type*)realloc(...)
+        const mallocPatterns = [
+            /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/,  // with cast
+            /(\w+)\s*=\s*(malloc|calloc|realloc)\s*\([^)]+\)/,              // without cast
+            /(\w+)\s*=\s*\([^)]*\)\s*(malloc|calloc|realloc)\s*\([^)]+\)/     // alternative cast format
+        ];
+        
+        let mallocMatch = null;
+        for (const pattern of mallocPatterns) {
+            mallocMatch = trimmed.match(pattern);
+            if (mallocMatch) break;
+        }
+
         if (mallocMatch) {
             const varName = mallocMatch[1];
             const func = mallocMatch[2];
-            const sizeMatch = trimmed.match(/sizeof\s*\([^)]+\)\s*\*\s*(\d+)|(\d+)\s*\*\s*sizeof\s*\([^)]+\)|(\d+)\s*\*\s*sizeof/);
-            const size = sizeMatch ? (parseInt(sizeMatch[1]) || parseInt(sizeMatch[2]) || parseInt(sizeMatch[3]) || 1) : 1;
-            const bytes = size * 4; // Assume 4 bytes per element
+            
+            // Extract size - handle various patterns
+            let size = 1;
+            const sizePatterns = [
+                /sizeof\s*\([^)]+\)\s*\*\s*(\d+)/,      // sizeof(type) * n
+                /(\d+)\s*\*\s*sizeof\s*\([^)]+\)/,      // n * sizeof(type)
+                /(\d+)\s*\*\s*sizeof/,                   // n * sizeof
+                /malloc\s*\(\s*(\d+)\s*\)/,              // malloc(n)
+                /calloc\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)/,  // calloc(n, size)
+                /malloc\s*\(\s*(\d+)\s*\*\s*sizeof/,     // malloc(n * sizeof
+                /(\d+)\s*\)/                              // just a number before closing paren
+            ];
+            
+            for (const sizePattern of sizePatterns) {
+                const sizeMatch = trimmed.match(sizePattern);
+                if (sizeMatch) {
+                    // For calloc, multiply both arguments
+                    if (sizeMatch[2]) {
+                        size = (parseInt(sizeMatch[1]) || 1) * (parseInt(sizeMatch[2]) || 1);
+                    } else {
+                        size = parseInt(sizeMatch[1]) || 1;
+                    }
+                    break;
+                }
+            }
+            
+            // If no size found, try to extract from malloc/calloc arguments
+            if (size === 1) {
+                const argMatch = trimmed.match(/(malloc|calloc|realloc)\s*\(\s*([^)]+)\s*\)/);
+                if (argMatch && argMatch[2]) {
+                    const args = argMatch[2];
+                    // Try to find a number in the arguments
+                    const numMatch = args.match(/(\d+)/);
+                    if (numMatch) {
+                        size = parseInt(numMatch[1]) || 1;
+                    }
+                }
+            }
+            
+            // Estimate bytes (4 bytes per element for int, 1 for char, etc.)
+            // Try to detect type from the line
+            let bytesPerElement = 4; // default
+            if (trimmed.includes('char') || trimmed.includes('unsigned char')) {
+                bytesPerElement = 1;
+            } else if (trimmed.includes('int') || trimmed.includes('float')) {
+                bytesPerElement = 4;
+            } else if (trimmed.includes('double') || trimmed.includes('long long')) {
+                bytesPerElement = 8;
+            }
+            
+            const bytes = size * bytesPerElement;
             
             analysis.allocations.push({
                 var: varName,
                 line: lineNum,
                 function: func,
                 size: bytes,
-                lineText: trimmed
+                lineText: originalLine.trim()
             });
             allocations.push({ var: varName, line: lineNum, size: bytes });
             currentMemory += bytes;
         }
 
-        // Detect free
-        const freeMatch = trimmed.match(/free\s*\(\s*(\w+)\s*\)/);
+        // Detect free - more flexible pattern
+        const freePatterns = [
+            /free\s*\(\s*(\w+)\s*\)/,           // free(var)
+            /free\s*\(\s*(\w+)\s*\)\s*;?/       // free(var);
+        ];
+        
+        let freeMatch = null;
+        for (const pattern of freePatterns) {
+            freeMatch = trimmed.match(pattern);
+            if (freeMatch) break;
+        }
+        
         if (freeMatch) {
             const varName = freeMatch[1];
             const allocIndex = allocations.findIndex(a => a.var === varName);
@@ -140,7 +234,7 @@ function performAnalysis(code) {
                 analysis.frees.push({
                     var: varName,
                     line: lineNum,
-                    lineText: trimmed
+                    lineText: originalLine.trim()
                 });
                 currentMemory -= allocations[allocIndex].size;
                 allocations.splice(allocIndex, 1);
@@ -153,20 +247,23 @@ function performAnalysis(code) {
                 type: 'Unsafe Function',
                 line: lineNum,
                 message: 'strcpy() used without bounds checking. Consider using strncpy() or strcpy_s().',
-                lineText: trimmed
+                lineText: originalLine.trim()
             });
         }
 
         // Check for NULL pointer checks
         if (mallocMatch && index < lines.length - 1) {
             const nextLines = lines.slice(index, Math.min(index + 3, lines.length));
-            const hasNullCheck = nextLines.some(l => l.includes('if') && l.includes('NULL') && l.includes(mallocMatch[1]));
+            const hasNullCheck = nextLines.some(l => {
+                const cleaned = removeComments(l);
+                return cleaned.includes('if') && cleaned.includes('NULL') && cleaned.includes(mallocMatch[1]);
+            });
             if (!hasNullCheck) {
                 analysis.warnings.push({
                     type: 'Missing NULL Check',
                     line: lineNum,
                     message: `No NULL pointer check after ${mallocMatch[2]}() call for ${mallocMatch[1]}.`,
-                    lineText: trimmed
+                    lineText: originalLine.trim()
                 });
             }
         }
