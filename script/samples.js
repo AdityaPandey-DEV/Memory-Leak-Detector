@@ -65,28 +65,39 @@ function loadSampleCode() {
 
 char *helper_leak(void) {
     char *p = malloc(128);
+    // Missing NULL Check: p not checked for NULL
     strcpy(p, "helper leaked buffer");
+    // Unsafe Function: strcpy without bounds checking
     return p;
     // Memory leak: p is returned but never freed by caller
 }
 
 int main(void) {
     char *a = malloc(100);
+    // Missing NULL Check: a not checked for NULL
     strcpy(a, "This will be leaked (a)");
+    // Unsafe Function: strcpy without bounds checking
     
     char *b = malloc(200);
+    // Missing NULL Check: b not checked for NULL
     strcpy(b, "This will be freed (b)");
+    // Unsafe Function: strcpy without bounds checking
     
     char *c = malloc(50);
+    // Missing NULL Check: c not checked for NULL
     strcpy(c, "Leaked (c)");
+    // Unsafe Function: strcpy without bounds checking
     
     char *h = helper_leak();
     
     char *d = malloc(300);
+    // Missing NULL Check: d not checked for NULL
     strcpy(d, "This will be freed (d)");
+    // Unsafe Function: strcpy without bounds checking
     
     free(b);
     free(d);
+    free(b);  // Double Free: b is freed twice
     
     // Memory leaks: a, c, h are never freed
     
@@ -96,9 +107,11 @@ int main(void) {
         case 'cpp':
             sample = `#include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 int* createArray(int size) {
     int *arr = new int[size];
+    // Missing NULL Check: arr not checked for NULL (though new throws in C++)
     for (int i = 0; i < size; i++) {
         arr[i] = i * 2;
     }
@@ -111,6 +124,13 @@ void processData() {
     ptr = new int(20);
     // Memory leak: first allocation is lost
     delete ptr;
+    delete ptr;  // Double Free: ptr is deleted twice
+}
+
+void unsafeFunction() {
+    char buffer[100];
+    strcpy(buffer, "Unsafe string copy");
+    // Unsafe Function: strcpy without bounds checking
 }
 
 int main() {
@@ -120,10 +140,12 @@ int main() {
     int* z = new int(256);
     
     delete y;
+    delete y;  // Double Free: y is deleted twice
     
     // Memory leaks: numbers, x, z are never deleted
     
     processData();
+    unsafeFunction();
     
     return 0;
 }`;

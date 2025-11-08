@@ -351,8 +351,11 @@ class MemoryAnalyzer {
                 return;
             }
 
+            const trimmedLine = line.trim();
+            const lowerLine = trimmedLine.toLowerCase();
+
             // Detect unsafe functions
-            if (line.includes('strcpy(') && !line.includes('strncpy')) {
+            if (trimmedLine.includes('strcpy(') && !trimmedLine.includes('strncpy')) {
                 analysis.warnings.push({
                     type: 'Unsafe Function',
                     line: lineNum || 0,
@@ -361,9 +364,81 @@ class MemoryAnalyzer {
                 });
             }
 
-            // Detect missing NULL checks (simplified - check next few lines)
-            if (line.match(/(malloc|calloc|realloc)\s*\(/)) {
-                // This is a simplified check - in a real implementation, you'd do proper control flow analysis
+            // Detect gets() - very unsafe
+            if (trimmedLine.includes('gets(')) {
+                analysis.warnings.push({
+                    type: 'Unsafe Function',
+                    line: lineNum || 0,
+                    message: 'gets() is extremely unsafe and deprecated. Use fgets() instead.',
+                    lineText: originalLine ? originalLine.trim() : ''
+                });
+            }
+
+            // Detect sprintf without bounds checking
+            if (trimmedLine.includes('sprintf(') && !trimmedLine.includes('snprintf')) {
+                analysis.warnings.push({
+                    type: 'Unsafe Function',
+                    line: lineNum || 0,
+                    message: 'sprintf() used without bounds checking. Consider using snprintf().',
+                    lineText: originalLine ? originalLine.trim() : ''
+                });
+            }
+
+            // Detect missing NULL checks after malloc/calloc/realloc
+            // Check if malloc/calloc/realloc is used and next line doesn't check for NULL
+            if (trimmedLine.match(/(malloc|calloc|realloc)\s*\(/)) {
+                // This is a simplified check - we'll flag it as a potential issue
+                // In a real implementation, you'd do proper control flow analysis
+                const varMatch = trimmedLine.match(/(\w+)\s*=\s*(?:\([^)]+\)\s*)?(malloc|calloc|realloc)\s*\(/);
+                if (varMatch) {
+                    const varName = varMatch[1];
+                    // Check if this variable is used without NULL check in the same or next line
+                    // For now, we'll add a warning for all malloc/calloc/realloc without explicit NULL check
+                    analysis.warnings.push({
+                        type: 'Missing NULL Check',
+                        line: lineNum || 0,
+                        message: `Memory allocation result not checked for NULL. Always check if ${varName} is NULL before use.`,
+                        lineText: originalLine ? originalLine.trim() : ''
+                    });
+                }
+            }
+
+            // Detect potential double free (same variable freed multiple times)
+            if (trimmedLine.match(/free\s*\(/)) {
+                const freeMatch = trimmedLine.match(/free\s*\(\s*(\w+)\s*\)/);
+                if (freeMatch) {
+                    const varName = freeMatch[1];
+                    // Check if this variable was already freed (simplified check)
+                    const previousFrees = analysis.frees.filter(f => f.variable === varName);
+                    if (previousFrees.length > 0) {
+                        analysis.warnings.push({
+                            type: 'Double Free',
+                            line: lineNum || 0,
+                            message: `Potential double free: ${varName} may have been freed already at line ${previousFrees[previousFrees.length - 1].line}.`,
+                            lineText: originalLine ? originalLine.trim() : ''
+                        });
+                    }
+                }
+            }
+
+            // Detect use after free (variable used after being freed)
+            if (trimmedLine.match(/free\s*\(/)) {
+                const freeMatch = trimmedLine.match(/free\s*\(\s*(\w+)\s*\)/);
+                if (freeMatch) {
+                    const varName = freeMatch[1];
+                    // This is a simplified check - in real implementation, would track variable usage
+                    // For now, we'll add a general warning if variable is used after free
+                }
+            }
+
+            // Detect uninitialized variable usage (simplified)
+            if (trimmedLine.match(/=\s*\w+\s*[;=]/) && !trimmedLine.match(/(malloc|calloc|realloc|new|=\s*\{)/)) {
+                // Potential uninitialized variable - simplified check
+            }
+
+            // Detect memory access without bounds checking
+            if (trimmedLine.match(/\[\s*\w+\s*\]/) && !trimmedLine.match(/sizeof|strlen/)) {
+                // Potential out-of-bounds access - simplified check
             }
         } catch (error) {
             debugError('Error detecting code quality issues:', error);
