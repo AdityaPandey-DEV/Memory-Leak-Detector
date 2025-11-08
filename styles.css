@@ -1,22 +1,507 @@
-.code-editor {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.6;
+/* ============================================
+   MLDA - Memory Leak Detector Stylesheet
+   ============================================ */
+
+/* ===== Base Styles ===== */
+:root {
+    --primary-color: #3B82F6;
+    --secondary-color: #8B5CF6;
+    --success-color: #10B981;
+    --danger-color: #EF4444;
+    --warning-color: #F59E0B;
+    --info-color: #3B82F6;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+    --bg-primary: #F9FAFB;
+    --bg-secondary: #FFFFFF;
+    --border-color: #E5E7EB;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --transition-base: all 0.2s ease-in-out;
+    --border-radius: 0.5rem;
 }
 
+/* ===== Code Editor Styles ===== */
+.code-editor {
+    font-family: 'Courier New', 'Consolas', 'Monaco', 'Menlo', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    tab-size: 4;
+    resize: vertical;
+    min-height: 300px;
+    background-color: #FAFAFA;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-base);
+}
+
+.code-editor:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: #FFFFFF;
+}
+
+.code-editor::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+/* ===== Tab Content Styles ===== */
 .tab-content {
     display: none !important;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .tab-content.active {
     display: block !important;
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Stat Card Styles ===== */
 .stat-card {
-    transition: transform 0.2s;
+    transition: var(--transition-base);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: currentColor;
+    transition: width 0.3s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
+.stat-card:hover::before {
+    width: 6px;
+}
+
+/* ===== Button Styles ===== */
+button {
+    transition: var(--transition-base);
+    cursor: pointer;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* ===== Tab Button Styles ===== */
+.tab-btn {
+    position: relative;
+    transition: var(--transition-base);
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+/* ===== Loading Animation ===== */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+/* ===== Leak Item Styles ===== */
+.leak-item {
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.leak-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--danger-color);
+    transition: width 0.3s ease;
+}
+
+.leak-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.leak-item:hover::before {
+    width: 6px;
+}
+
+/* ===== Form Elements ===== */
+select {
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+select:hover {
+    border-color: var(--primary-color);
+}
+
+/* ===== Chart Container ===== */
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===== Scrollbar Styles ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--text-secondary);
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-primary);
+}
+
+/* ===== Focus Styles ===== */
+*:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ===== Print Styles ===== */
+@media print {
+    .tab-btn,
+    button,
+    #codeEditor,
+    select {
+        display: none;
+    }
+    
+    .tab-content {
+        display: block !important;
+    }
+    
+    .stat-card {
+        break-inside: avoid;
+    }
+}
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .flex.gap-2.items-center {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .flex.gap-2.items-center button {
+        flex: 1 1 auto;
+        min-width: 100px;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    #codeEditor {
+        height: 300px !important;
+        font-size: 13px;
+    }
+    
+    .grid.grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+    
+    .tab-btn {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        flex: 1;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-card span {
+        font-size: 1.25rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    h3 {
+        font-size: 1.125rem;
+    }
+}
+
+/* ===== Tablet Responsive ===== */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    
+    #codeEditor {
+        height: 400px;
+    }
+}
+
+/* ===== Dark Mode Support ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #F9FAFB;
+        --text-secondary: #D1D5DB;
+        --bg-primary: #1F2937;
+        --bg-secondary: #111827;
+        --border-color: #374151;
+    }
+}
+
+/* ===== Accessibility Improvements ===== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ===== Smooth Scrolling ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===== Selection Styles ===== */
+::selection {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+::-moz-selection {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* ===== Card Hover Effects ===== */
+.bg-white {
+    transition: var(--transition-base);
+}
+
+.bg-white:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* ===== Notification Container ===== */
+#notification-container {
+    z-index: 9999;
+}
+
+/* ===== Timeline Chart Container ===== */
+#timeline-tab {
+    position: relative;
+}
+
+#timeline-tab canvas {
+    max-height: 400px;
+}
+
+/* ===== Recommendations Card Styles ===== */
+.bg-blue-50,
+.bg-green-50,
+.bg-yellow-50,
+.bg-purple-50,
+.bg-red-50,
+.bg-indigo-50,
+.bg-teal-50 {
+    transition: var(--transition-base);
+}
+
+.bg-blue-50:hover,
+.bg-green-50:hover,
+.bg-yellow-50:hover,
+.bg-purple-50:hover,
+.bg-red-50:hover,
+.bg-indigo-50:hover,
+.bg-teal-50:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== Animation Utilities ===== */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+/* ===== Utility Classes ===== */
+.text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* ===== Performance Optimizations ===== */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img, canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* ===== High Contrast Mode Support ===== */
+@media (prefers-contrast: high) {
+    .stat-card,
+    .leak-item,
+    button {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ===== Reduced Motion Support ===== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

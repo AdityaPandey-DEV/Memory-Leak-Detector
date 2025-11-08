@@ -3,82 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Universal Memory Leak Detection and Code Analysis Tool">
-    <meta name="keywords" content="memory leak, code analyzer, static analysis, C, C++, JavaScript">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Universal Memory Leak Detection and Code Analysis Tool - Analyze C, C++, JavaScript, Python, Java, Rust, Go code for memory leaks">
+    <meta name="keywords" content="memory leak, code analyzer, static analysis, C, C++, JavaScript, Python, Java, Rust, Go, memory management, code quality">
+    <meta name="author" content="MLDA Team">
+    <meta name="theme-color" content="#3B82F6">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MLDA - Memory Leak Detector & Code Analyzer">
+    <meta property="og:description" content="Universal Memory Leak Detection and Code Analysis Tool">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MLDA - Memory Leak Detector & Code Analyzer">
+    <meta name="twitter:description" content="Universal Memory Leak Detection and Code Analysis Tool">
+    
     <title>MLDA - Memory Leak Detector & Code Analyzer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- AST Parser for JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/acorn@8/dist/acorn.min.js"></script>
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Mobile responsiveness improvements */
-        @media (max-width: 768px) {
-            .container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-            .flex.gap-2.items-center {
-                flex-wrap: wrap;
-            }
-            .flex.gap-2.items-center button {
-                flex: 1 1 auto;
-                min-width: 100px;
-            }
-            #codeEditor {
-                height: 300px !important;
-            }
-            .grid.grid-cols-3 {
-                grid-template-columns: 1fr;
-            }
-            .tab-btn {
-                font-size: 0.75rem;
-                padding: 0.5rem 0.75rem;
-            }
-        }
-        /* Code editor improvements */
-        #codeEditor {
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.5;
-            tab-size: 4;
-        }
-        /* Screen reader only */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
-    </style>
+    
+    <!-- External Scripts (defer for performance) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/acorn@8/dist/acorn.min.js" defer></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg">
+        Skip to main content
+    </a>
+    
     <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg" role="banner">
         <div class="container mx-auto px-4 py-4">
-            <h1 class="text-3xl font-bold">MLDA - Memory Leak Detector & Code Analyzer</h1>
-            <p class="text-blue-100 mt-1">Universal Memory Leak Detection and Code Analysis Tool</p>
+            <h1 class="text-3xl font-bold text-shadow">MLDA - Memory Leak Detector & Code Analyzer</h1>
+            <p class="text-blue-100 mt-1" role="doc-subtitle">Universal Memory Leak Detection and Code Analysis Tool</p>
         </div>
     </header>
 
-    <div class="container mx-auto px-4 py-6">
+    <main id="main-content" class="container mx-auto px-4 py-6" role="main">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left Column: Code Editor -->
-            <div class="lg:col-span-2">
+            <section class="lg:col-span-2" aria-labelledby="editor-heading">
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold text-gray-800">Code Editor</h2>
-                        <div class="flex gap-2 items-center">
+                        <h2 id="editor-heading" class="text-2xl font-semibold text-gray-800">Code Editor</h2>
+                        <div class="flex gap-2 items-center" role="toolbar" aria-label="Editor actions">
                             <div class="flex items-center gap-2">
-                                <label for="languageSelect" class="text-sm font-medium text-gray-700">Language:</label>
-                                <select id="languageSelect" class="bg-white border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                                <label for="languageSelect" class="text-sm font-medium text-gray-700 sr-only">Programming Language</label>
+                                <select id="languageSelect" 
+                                        class="bg-white border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                        aria-label="Select programming language">
                                     <option value="c">C</option>
                                     <option value="cpp">C++</option>
                                     <option value="javascript">JavaScript</option>
@@ -91,117 +76,170 @@
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <button onclick="loadSampleCode()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
+                            <button onclick="loadSampleCode()" 
+                                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+                                    aria-label="Load sample code"
+                                    title="Load sample code (Ctrl+L)">
                                 Load Sample
                             </button>
-                            <button id="analyzeBtn" onclick="analyzeCode()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                            <button id="analyzeBtn" 
+                                    onclick="analyzeCode()" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
+                                    aria-label="Analyze code for memory leaks"
+                                    title="Analyze memory (Ctrl+S)">
                                 Analyze Memory
                             </button>
-                            <button onclick="clearEditor()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
+                            <button onclick="clearEditor()" 
+                                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+                                    aria-label="Clear code editor"
+                                    title="Clear editor (Ctrl+K)">
                                 Clear
                             </button>
                         </div>
                     </div>
-                    <textarea id="codeEditor" class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none font-mono text-sm" 
+                    <label for="codeEditor" class="sr-only">Code Editor</label>
+                    <textarea id="codeEditor" 
+                              class="w-full h-96 p-4 border-2 border-gray-300 rounded-lg code-editor focus:border-blue-500 focus:outline-none font-mono text-sm" 
                               placeholder="Enter your code here..." 
                               spellcheck="false"
-                              aria-label="Code editor for entering source code"></textarea>
+                              aria-label="Code editor for entering source code"
+                              aria-describedby="editor-description"
+                              role="textbox"
+                              aria-multiline="true"></textarea>
+                    <p id="editor-description" class="sr-only">Enter your code in the selected programming language to analyze for memory leaks</p>
                 </div>
-            </div>
+            </section>
 
             <!-- Right Column: Statistics Dashboard -->
-            <div class="lg:col-span-1">
+            <aside class="lg:col-span-1" aria-labelledby="stats-heading">
                 <div class="bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Memory Statistics</h2>
+                    <h2 id="stats-heading" class="text-2xl font-semibold text-gray-800 mb-4">Memory Statistics</h2>
                     
                     <!-- Statistics Cards -->
-                    <div class="space-y-4">
-                        <div class="stat-card bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div class="space-y-4" role="list" aria-label="Memory statistics">
+                        <div class="stat-card bg-blue-50 border-l-4 border-blue-500 p-4 rounded" role="listitem">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Total Allocations</span>
-                                <span id="totalAllocations" class="text-2xl font-bold text-blue-600">0 calls</span>
+                                <span class="text-gray-600" aria-label="Total allocations">Total Allocations</span>
+                                <span id="totalAllocations" class="text-2xl font-bold text-blue-600" aria-live="polite">0 calls</span>
                             </div>
                         </div>
-                        <div class="stat-card bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <div class="stat-card bg-green-50 border-l-4 border-green-500 p-4 rounded" role="listitem">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Total Frees</span>
-                                <span id="totalFrees" class="text-2xl font-bold text-green-600">0 calls</span>
+                                <span class="text-gray-600" aria-label="Total frees">Total Frees</span>
+                                <span id="totalFrees" class="text-2xl font-bold text-green-600" aria-live="polite">0 calls</span>
                             </div>
                         </div>
-                        <div class="stat-card bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <div class="stat-card bg-red-50 border-l-4 border-red-500 p-4 rounded" role="listitem">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Memory Leaks</span>
-                                <span id="memoryLeaks" class="text-2xl font-bold text-red-600">0 leaks</span>
+                                <span class="text-gray-600" aria-label="Memory leaks">Memory Leaks</span>
+                                <span id="memoryLeaks" class="text-2xl font-bold text-red-600" aria-live="polite">0 leaks</span>
                             </div>
                         </div>
-                        <div class="stat-card bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+                        <div class="stat-card bg-orange-50 border-l-4 border-orange-500 p-4 rounded" role="listitem">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Leaked Bytes</span>
-                                <span id="leakedBytes" class="text-2xl font-bold text-orange-600">0 B</span>
+                                <span class="text-gray-600" aria-label="Leaked bytes">Leaked Bytes</span>
+                                <span id="leakedBytes" class="text-2xl font-bold text-orange-600" aria-live="polite">0 B</span>
                             </div>
                         </div>
-                        <div class="stat-card bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                        <div class="stat-card bg-purple-50 border-l-4 border-purple-500 p-4 rounded" role="listitem">
                             <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Critical Issues</span>
-                                <span id="criticalIssues" class="text-2xl font-bold text-purple-600">0 issues</span>
+                                <span class="text-gray-600" aria-label="Critical issues">Critical Issues</span>
+                                <span id="criticalIssues" class="text-2xl font-bold text-purple-600" aria-live="polite">0 issues</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Pie Chart -->
-                    <div class="mt-6">
+                    <div class="mt-6" role="img" aria-label="Memory distribution chart">
                         <h3 class="text-lg font-semibold text-gray-700 mb-3">Memory Distribution</h3>
-                        <canvas id="memoryChart" class="w-full"></canvas>
+                        <canvas id="memoryChart" class="w-full" aria-label="Pie chart showing memory distribution"></canvas>
                     </div>
                 </div>
-            </div>
+            </aside>
         </div>
 
         <!-- Detailed Reporting Tabs -->
-        <div class="mt-6 bg-white rounded-lg shadow-lg">
+        <section class="mt-6 bg-white rounded-lg shadow-lg" aria-labelledby="tabs-heading">
+            <h2 id="tabs-heading" class="sr-only">Analysis Results Tabs</h2>
             <div class="border-b border-gray-200">
-                <nav class="flex -mb-px">
-                    <button data-tab="leaks" class="tab-btn active px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                <nav class="flex -mb-px" role="tablist" aria-label="Analysis result tabs">
+                    <button data-tab="leaks" 
+                            class="tab-btn active px-6 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="leaks-tab"
+                            id="leaks-tab-btn">
                         Memory Leaks
                     </button>
-                    <button data-tab="analysis" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    <button data-tab="analysis" 
+                            class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="analysis-tab"
+                            id="analysis-tab-btn">
                         Code Analysis
                     </button>
-                    <button data-tab="timeline" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    <button data-tab="timeline" 
+                            class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="timeline-tab"
+                            id="timeline-tab-btn">
                         Memory Timeline
                     </button>
-                    <button data-tab="recommendations" class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    <button data-tab="recommendations" 
+                            class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="recommendations-tab"
+                            id="recommendations-tab-btn">
                         Recommendations
                     </button>
                 </nav>
             </div>
 
             <!-- Memory Leaks Tab -->
-            <div id="leaks-tab" class="tab-content active p-6">
+            <div id="leaks-tab" 
+                 class="tab-content active p-6"
+                 role="tabpanel"
+                 aria-labelledby="leaks-tab-btn"
+                 aria-hidden="false">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Detected Memory Leaks</h3>
-                <div id="leaksList" class="space-y-4">
+                <div id="leaksList" class="space-y-4" role="region" aria-live="polite" aria-label="Memory leaks list">
                     <p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>
                 </div>
             </div>
 
             <!-- Code Analysis Tab -->
-            <div id="analysis-tab" class="tab-content p-6">
+            <div id="analysis-tab" 
+                 class="tab-content p-6"
+                 role="tabpanel"
+                 aria-labelledby="analysis-tab-btn"
+                 aria-hidden="true">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Code Analysis Report</h3>
-                <div id="analysisContent">
+                <div id="analysisContent" role="region" aria-live="polite" aria-label="Code analysis results">
                     <p class="text-gray-500 text-center py-8">No analysis performed yet. Click "Analyze Memory" to start.</p>
                 </div>
             </div>
 
             <!-- Memory Timeline Tab -->
-            <div id="timeline-tab" class="tab-content p-6">
+            <div id="timeline-tab" 
+                 class="tab-content p-6"
+                 role="tabpanel"
+                 aria-labelledby="timeline-tab-btn"
+                 aria-hidden="true">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Memory Usage Timeline</h3>
-                <div style="position: relative; height: 400px;">
-                    <canvas id="timelineChart"></canvas>
+                <div class="timeline-chart-container" style="position: relative; height: 400px;">
+                    <canvas id="timelineChart" aria-label="Line chart showing memory usage over time"></canvas>
                 </div>
             </div>
 
             <!-- Recommendations Tab -->
-            <div id="recommendations-tab" class="tab-content p-6">
+            <div id="recommendations-tab" 
+                 class="tab-content p-6"
+                 role="tabpanel"
+                 aria-labelledby="recommendations-tab-btn"
+                 aria-hidden="true">
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">Best Practices & Recommendations</h3>
                 <div class="space-y-4">
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
@@ -234,8 +272,15 @@
                     </div>
                 </div>
             </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 mt-8" role="contentinfo">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">&copy; 2024 MLDA - Memory Leak Detector & Code Analyzer. All rights reserved.</p>
         </div>
-    </div>
+    </footer>
 
     <!-- Load modules in correct order -->
     <script src="config.js"></script>
