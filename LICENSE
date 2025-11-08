@@ -1,6 +1,7 @@
-MIT License
+MIT License with Attribution
 
 Copyright (c) 2025 MLDA - Memory Leak Detector & Code Analyzer
+Copyright (c) 2025 Aditya Pandey (AdityaPandey-DEV)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +10,19 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+2. **Attribution Requirement**: If you use, modify, or distribute this Software,
+   you must give appropriate credit to the original author(s). This includes:
+   - Including the original copyright notice
+   - Providing attribution to "Aditya Pandey (AdityaPandey-DEV)" and "MLDA Team"
+   - Linking back to the original repository when possible:
+     https://github.com/AdityaPandey-DEV/Memory-Leak-Detector
+
+   For derivative works or substantial modifications, you may include your own
+   copyright notice, but you must retain the original copyright notice and
+   attribution as well.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
