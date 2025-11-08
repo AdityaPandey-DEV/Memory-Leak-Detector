@@ -158,76 +158,7 @@ function applyDarkModeStyles(theme) {
         existingStyle.remove();
     }
 
-    if (theme === 'dark') {
-        const style = document.createElement('style');
-        style.id = 'dark-mode-styles';
-        style.textContent = `
-            .dark-mode {
-                background-color: #1a1a1a !important;
-                color: #e5e5e5 !important;
-            }
-            .dark-mode .bg-white {
-                background-color: #2d2d2d !important;
-                color: #e5e5e5 !important;
-            }
-            .dark-mode .bg-gray-100 {
-                background-color: #1a1a1a !important;
-            }
-            .dark-mode .bg-gray-50 {
-                background-color: #2d2d2d !important;
-            }
-            .dark-mode .text-gray-800 {
-                color: #e5e5e5 !important;
-            }
-            .dark-mode .text-gray-700 {
-                color: #d1d1d1 !important;
-            }
-            .dark-mode .text-gray-600 {
-                color: #b0b0b0 !important;
-            }
-            .dark-mode .border-gray-300 {
-                border-color: #4a4a4a !important;
-            }
-            .dark-mode textarea {
-                background-color: #2d2d2d !important;
-                color: #e5e5e5 !important;
-                border-color: #4a4a4a !important;
-            }
-            .dark-mode select {
-                background-color: #2d2d2d !important;
-                color: #e5e5e5 !important;
-                border-color: #4a4a4a !important;
-            }
-            .dark-mode .bg-blue-50 {
-                background-color: #1e3a5f !important;
-            }
-            .dark-mode .bg-green-50 {
-                background-color: #1e4d2e !important;
-            }
-            .dark-mode .bg-red-50 {
-                background-color: #4d1e1e !important;
-            }
-            .dark-mode .bg-yellow-50 {
-                background-color: #4d3d1e !important;
-            }
-            .dark-mode .bg-purple-50 {
-                background-color: #3d1e4d !important;
-            }
-            .dark-mode .bg-orange-50 {
-                background-color: #4d2e1e !important;
-            }
-            .dark-mode .bg-indigo-50 {
-                background-color: #1e1e4d !important;
-            }
-            .dark-mode .bg-teal-50 {
-                background-color: #1e4d4d !important;
-            }
-            .dark-mode code {
-                background-color: #1a1a1a !important;
-                color: #e5e5e5 !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    // Dark mode styles are now handled by CSS variables and classes in styles.css
+    // This function is kept for backward compatibility but styles are primarily in CSS
 }
 
