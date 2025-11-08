@@ -77,9 +77,11 @@ cd Memory-Leak-Detector
 
 2. Open the HTML file in your browser:
 ```bash
-open memory_leak_detector.html
+open index.html
 ```
-Or simply double-click the `memory_leak_detector.html` file.
+Or simply double-click the `index.html` file.
+
+Alternatively, visit the live site: [https://adityapandey-dev.github.io/Memory-Leak-Detector/](https://adityapandey-dev.github.io/Memory-Leak-Detector/)
 
 ## 📖 How to Use
 
@@ -141,7 +143,7 @@ This project demonstrates several key Operating System concepts:
 ```
 Memory-Leak-Detector/
 │
-├── memory_leak_detector.html    # Main application file (single-file HTML)
+├── index.html                    # Main application file (single-file HTML)
 ├── README.md                    # Project documentation
 └── .git/                        # Git repository
 ```
