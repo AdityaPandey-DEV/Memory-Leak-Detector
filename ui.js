@@ -126,7 +126,7 @@ function updateLeaksTab(analysis) {
         }
 
         // Add filter/sort controls
-        if (analysis.leaks.length > 1) {
+        if (analysis.leaks && analysis.leaks.length > 1) {
             leaksList.innerHTML = `
                 <div class="mb-4 flex flex-wrap gap-2 items-center">
                     <label class="text-sm font-medium text-gray-700">Sort by:</label>
@@ -153,7 +153,8 @@ function updateLeaksTab(analysis) {
         // Use textContent for safety, but we need HTML for formatting
         // So we'll escape user content
         const leaksContainer = leaksList.querySelector('#leaksContainer') || leaksList;
-        const leaksHTML = analysis.leaks.map((leak, index) => {
+        const leaksArray = analysis.leaks && Array.isArray(analysis.leaks) ? analysis.leaks : [];
+        const leaksHTML = leaksArray.map((leak, index) => {
             const varName = escapeHtml(leak.var || 'unknown');
             const line = leak.line || 0;
             const func = escapeHtml(leak.function || 'unknown');
@@ -177,7 +178,12 @@ function updateLeaksTab(analysis) {
                 '</div>';
         }).join('');
         
-        leaksContainer.innerHTML = leaksHTML + '</div>';
+        // Only add closing div if we have a container
+        if (leaksContainer !== leaksList) {
+            leaksContainer.innerHTML = leaksHTML;
+        } else {
+            leaksList.innerHTML = leaksHTML;
+        }
     } catch (error) {
         debugError('Error updating leaks tab:', error);
         notifications.error('Failed to update leaks tab: ' + error.message);
@@ -230,7 +236,8 @@ function updateAnalysisTab(analysis) {
             html += '<p class="text-green-600">✓ No warnings detected!</p>';
         } else {
             html += '<div class="space-y-3">';
-            analysis.warnings.forEach(warning => {
+            const warningsArray = analysis.warnings && Array.isArray(analysis.warnings) ? analysis.warnings : [];
+            warningsArray.forEach(warning => {
                 const type = escapeHtml(warning.type || 'Unknown');
                 const line = warning.line || 0;
                 const message = escapeHtml(warning.message || 'No message');
@@ -284,7 +291,7 @@ function updateTimelineChart(analysis) {
         timelineChart = null;
     }
 
-    if (!analysis || !analysis.timeline || analysis.timeline.length === 0) {
+    if (!analysis || !analysis.timeline || !Array.isArray(analysis.timeline) || analysis.timeline.length === 0) {
         // Show message if no timeline data
         if (timelineTab) {
             const msg = document.createElement('p');
@@ -295,8 +302,8 @@ function updateTimelineChart(analysis) {
         return;
     }
 
-    const labels = analysis.timeline.map(t => `Line ${t.line}`);
-    const data = analysis.timeline.map(t => t.memory);
+    const labels = analysis.timeline ? analysis.timeline.map(t => `Line ${t.line || 0}`) : [];
+    const data = analysis.timeline ? analysis.timeline.map(t => t.memory || 0) : [];
 
         // Use setTimeout to ensure canvas is visible before rendering
         setTimeout(() => {

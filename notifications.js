@@ -19,7 +19,13 @@ class NotificationManager {
         }
     }
 
-    show(message, type = 'info', duration = CONFIG.UI.TOAST_DURATION) {
+    show(message, type = 'info', duration) {
+        // Use CONFIG if available, otherwise use default
+        if (duration === undefined) {
+            duration = (typeof CONFIG !== 'undefined' && CONFIG.UI && CONFIG.UI.TOAST_DURATION) 
+                ? CONFIG.UI.TOAST_DURATION 
+                : 3000;
+        }
         const notification = document.createElement('div');
         const bgColor = {
             'success': 'bg-green-500',

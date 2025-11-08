@@ -38,11 +38,13 @@ function shareAnalysis(analysis, code) {
         shareText += `Leaked Bytes: ${formatBytes(shareData.statistics.leakedBytes)}\n`;
         shareText += `Warnings: ${shareData.statistics.warnings}\n\n`;
 
-        if (shareData.leaks.length > 0) {
+        if (shareData.leaks && Array.isArray(shareData.leaks) && shareData.leaks.length > 0) {
             shareText += 'Memory Leaks:\n';
             shareText += '-'.repeat(40) + '\n';
             shareData.leaks.forEach((leak, index) => {
-                shareText += `${index + 1}. ${leak.var} (Line ${leak.line}) - ${formatBytes(leak.size || 0)}\n`;
+                if (leak) {
+                    shareText += `${index + 1}. ${leak.var || 'unknown'} (Line ${leak.line || 0}) - ${formatBytes(leak.size || 0)}\n`;
+                }
             });
         }
 

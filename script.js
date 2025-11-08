@@ -237,7 +237,7 @@ function performAnalysisInternal() {
         }
 
         // Show success message
-        const leakCount = analysis.leaks.length;
+        const leakCount = analysis.leaks ? analysis.leaks.length : 0;
         if (leakCount === 0) {
             notifications.success('Analysis complete! No memory leaks detected. ✓');
         } else {
@@ -268,17 +268,17 @@ function exportAnalysis() {
             timestamp: new Date().toISOString(),
             language: selectedLanguage,
             statistics: {
-                totalAllocations: currentAnalysis.allocations.length,
-                totalFrees: currentAnalysis.frees.length,
-                memoryLeaks: currentAnalysis.leaks.length,
-                leakedBytes: currentAnalysis.leaks.reduce((sum, leak) => sum + leak.size, 0),
-                warnings: currentAnalysis.warnings.length
+                totalAllocations: currentAnalysis.allocations ? currentAnalysis.allocations.length : 0,
+                totalFrees: currentAnalysis.frees ? currentAnalysis.frees.length : 0,
+                memoryLeaks: currentAnalysis.leaks ? currentAnalysis.leaks.length : 0,
+                leakedBytes: currentAnalysis.leaks ? currentAnalysis.leaks.reduce((sum, leak) => sum + (leak.size || 0), 0) : 0,
+                warnings: currentAnalysis.warnings ? currentAnalysis.warnings.length : 0
             },
-            allocations: currentAnalysis.allocations,
-            frees: currentAnalysis.frees,
-            leaks: currentAnalysis.leaks,
-            warnings: currentAnalysis.warnings,
-            timeline: currentAnalysis.timeline
+            allocations: currentAnalysis.allocations || [],
+            frees: currentAnalysis.frees || [],
+            leaks: currentAnalysis.leaks || [],
+            warnings: currentAnalysis.warnings || [],
+            timeline: currentAnalysis.timeline || []
         };
 
         const dataStr = JSON.stringify(exportData, null, 2);

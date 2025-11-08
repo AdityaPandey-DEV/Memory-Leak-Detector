@@ -115,8 +115,8 @@ function setupKeyboardNavigation() {
 
         // Escape: Close notifications
         if (e.key === 'Escape') {
-            const notifications = document.querySelectorAll('#notification-container > div');
-            notifications.forEach(notif => {
+            const notificationElements = document.querySelectorAll('#notification-container > div');
+            notificationElements.forEach(notif => {
                 if (notif.querySelector('button')) {
                     notif.querySelector('button').click();
                 }

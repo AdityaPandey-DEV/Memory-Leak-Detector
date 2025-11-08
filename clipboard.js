@@ -95,15 +95,17 @@ function copyAnalysisResults(analysis) {
         text += `Leaked Bytes: ${formatBytes(analysis.leaks ? analysis.leaks.reduce((sum, leak) => sum + (leak.size || 0), 0) : 0)}\n`;
         text += `Warnings: ${analysis.warnings ? analysis.warnings.length : 0}\n\n`;
 
-        if (analysis.leaks && analysis.leaks.length > 0) {
+        if (analysis.leaks && Array.isArray(analysis.leaks) && analysis.leaks.length > 0) {
             text += 'Memory Leaks:\n';
             text += '-'.repeat(40) + '\n';
             analysis.leaks.forEach((leak, index) => {
-                text += `${index + 1}. Variable: ${leak.var}\n`;
-                text += `   Line: ${leak.line}\n`;
-                text += `   Function: ${leak.function}\n`;
-                text += `   Size: ${formatBytes(leak.size || 0)}\n`;
-                text += `   Fix: ${leak.fix || 'No fix available'}\n\n`;
+                if (leak) {
+                    text += `${index + 1}. Variable: ${leak.var || 'unknown'}\n`;
+                    text += `   Line: ${leak.line || 0}\n`;
+                    text += `   Function: ${leak.function || 'unknown'}\n`;
+                    text += `   Size: ${formatBytes(leak.size || 0)}\n`;
+                    text += `   Fix: ${leak.fix || 'No fix available'}\n\n`;
+                }
             });
         }
 

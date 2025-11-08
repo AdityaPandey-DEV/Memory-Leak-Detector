@@ -374,25 +374,40 @@ class ASTParser {
             // Complete statement
             if (inStatement) {
                 currentStatement += ' ' + trimmed;
-                trimmed = currentStatement;
+                const completeStatement = currentStatement;
                 inStatement = false;
+                
+                // Parse allocations from complete statement
+                const alloc = this.parseCAllocation(completeStatement, statementStartLine || lineNum, line, currentFunction, inLoop);
+                if (alloc) {
+                    nodes.push(alloc);
+                }
+                
+                // Parse deallocations from complete statement
+                const dealloc = this.parseCDeallocation(completeStatement, statementStartLine || lineNum, line);
+                if (dealloc) {
+                    nodes.push(dealloc);
+                }
+                
+                // Reset statement tracking
+                currentStatement = '';
+                statementStartLine = 0;
+                continue;
             }
             
-            // Parse allocations
-            const alloc = this.parseCAllocation(trimmed, statementStartLine || lineNum, line, currentFunction, inLoop);
-            if (alloc) {
-                nodes.push(alloc);
+            // Parse allocations (only if not in multi-line statement)
+            if (!inStatement) {
+                const alloc = this.parseCAllocation(trimmed, lineNum, line, currentFunction, inLoop);
+                if (alloc) {
+                    nodes.push(alloc);
+                }
+                
+                // Parse deallocations
+                const dealloc = this.parseCDeallocation(trimmed, lineNum, line);
+                if (dealloc) {
+                    nodes.push(dealloc);
+                }
             }
-            
-            // Parse deallocations
-            const dealloc = this.parseCDeallocation(trimmed, lineNum, line);
-            if (dealloc) {
-                nodes.push(dealloc);
-            }
-            
-            // Reset statement tracking
-            currentStatement = '';
-            statementStartLine = 0;
             
             // Detect scope end
             if (braceDepth === 0) {

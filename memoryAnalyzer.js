@@ -244,120 +244,185 @@ class MemoryAnalyzer {
     }
 
     handleAllocation(alloc, analysis) {
-        // Check for pointer reassignment (memory leak)
-        if (this.allocations.has(alloc.var)) {
-            const existingAllocs = this.allocations.get(alloc.var);
-            const lastAlloc = existingAllocs[existingAllocs.length - 1];
-            
-            // Mark previous allocation as leak
-            analysis.leaks.push({
-                var: alloc.var,
-                line: lastAlloc.line,
-                function: lastAlloc.function,
-                size: lastAlloc.size,
-                inLoop: lastAlloc.inLoop,
-                fix: `Memory leak: ${alloc.var} was reassigned on line ${alloc.line} without freeing the previous allocation on line ${lastAlloc.line}. Add free(${alloc.var}); before the reassignment.`
-            });
-            
-            // Remove from tracking
-            this.currentMemory -= lastAlloc.size;
-            existingAllocs.pop();
-        }
+        try {
+            if (!alloc || !alloc.var || !analysis) {
+                debugWarn('Invalid allocation or analysis object');
+                return;
+            }
 
-        // Add new allocation
-        if (!this.allocations.has(alloc.var)) {
-            this.allocations.set(alloc.var, []);
+            // Check for pointer reassignment (memory leak)
+            if (this.allocations.has(alloc.var)) {
+                const existingAllocs = this.allocations.get(alloc.var);
+                if (existingAllocs && existingAllocs.length > 0) {
+                    const lastAlloc = existingAllocs[existingAllocs.length - 1];
+                    
+                    // Mark previous allocation as leak
+                    if (analysis.leaks && Array.isArray(analysis.leaks)) {
+                        analysis.leaks.push({
+                            var: alloc.var,
+                            line: lastAlloc.line || 0,
+                            function: lastAlloc.function || 'unknown',
+                            size: lastAlloc.size || 0,
+                            inLoop: lastAlloc.inLoop || false,
+                            fix: `Memory leak: ${alloc.var} was reassigned on line ${alloc.line || 0} without freeing the previous allocation on line ${lastAlloc.line || 0}. Add free(${alloc.var}); before the reassignment.`
+                        });
+                    }
+                    
+                    // Remove from tracking
+                    this.currentMemory -= (lastAlloc.size || 0);
+                    existingAllocs.pop();
+                }
+            }
+
+            // Add new allocation
+            if (!this.allocations.has(alloc.var)) {
+                this.allocations.set(alloc.var, []);
+            }
+            this.allocations.get(alloc.var).push(alloc);
+            
+            if (analysis.allocations && Array.isArray(analysis.allocations)) {
+                analysis.allocations.push(alloc);
+            }
+            this.currentMemory += (alloc.size || 0);
+        } catch (error) {
+            debugError('Error handling allocation:', error);
         }
-        this.allocations.get(alloc.var).push(alloc);
-        analysis.allocations.push(alloc);
-        this.currentMemory += alloc.size;
     }
 
     handleFree(free, analysis) {
-        if (!this.allocations.has(free.var)) {
-            // Double free or free of unallocated pointer
-            analysis.warnings.push({
-                type: 'Potential Double Free',
-                line: free.line,
-                message: `free() called on ${free.var} which may not be allocated or already freed.`,
-                lineText: free.lineText
-            });
-            return;
-        }
+        try {
+            if (!free || !free.var || !analysis) {
+                debugWarn('Invalid free or analysis object');
+                return;
+            }
 
-        const allocs = this.allocations.get(free.var);
-        if (allocs.length === 0) {
-            analysis.warnings.push({
-                type: 'Double Free',
-                line: free.line,
-                message: `free() called on ${free.var} which has already been freed.`,
-                lineText: free.lineText
-            });
-            return;
-        }
+            if (!this.allocations.has(free.var)) {
+                // Double free or free of unallocated pointer
+                if (analysis.warnings && Array.isArray(analysis.warnings)) {
+                    analysis.warnings.push({
+                        type: 'Potential Double Free',
+                        line: free.line || 0,
+                        message: `free() called on ${free.var} which may not be allocated or already freed.`,
+                        lineText: free.lineText || ''
+                    });
+                }
+                return;
+            }
 
-        // Free the most recent allocation (LIFO)
-        const freedAlloc = allocs.pop();
-        analysis.frees.push({
-            var: free.var,
-            line: free.line,
-            lineText: free.lineText,
-            freedAllocId: freedAlloc.allocId
-        });
-        this.currentMemory -= freedAlloc.size;
+            const allocs = this.allocations.get(free.var);
+            if (!allocs || allocs.length === 0) {
+                if (analysis.warnings && Array.isArray(analysis.warnings)) {
+                    analysis.warnings.push({
+                        type: 'Double Free',
+                        line: free.line || 0,
+                        message: `free() called on ${free.var} which has already been freed.`,
+                        lineText: free.lineText || ''
+                    });
+                }
+                return;
+            }
 
-        // Clean up if no more allocations for this variable
-        if (allocs.length === 0) {
-            this.allocations.delete(free.var);
+            // Free the most recent allocation (LIFO)
+            const freedAlloc = allocs.pop();
+            if (freedAlloc) {
+                if (analysis.frees && Array.isArray(analysis.frees)) {
+                    analysis.frees.push({
+                        var: free.var,
+                        line: free.line || 0,
+                        lineText: free.lineText || '',
+                        freedAllocId: freedAlloc.allocId || ''
+                    });
+                }
+                this.currentMemory -= (freedAlloc.size || 0);
+            }
+
+            // Clean up if no more allocations for this variable
+            if (allocs.length === 0) {
+                this.allocations.delete(free.var);
+            }
+        } catch (error) {
+            debugError('Error handling free:', error);
         }
     }
 
     detectCodeQualityIssues(line, lineNum, originalLine, analysis) {
-        // Detect unsafe functions
-        if (line.includes('strcpy(') && !line.includes('strncpy')) {
-            analysis.warnings.push({
-                type: 'Unsafe Function',
-                line: lineNum,
-                message: 'strcpy() used without bounds checking. Consider using strncpy() or strcpy_s().',
-                lineText: originalLine.trim()
-            });
-        }
+        try {
+            if (!line || !analysis || !analysis.warnings || !Array.isArray(analysis.warnings)) {
+                return;
+            }
 
-        // Detect missing NULL checks (simplified - check next few lines)
-        if (line.match(/(malloc|calloc|realloc)\s*\(/)) {
-            // This is a simplified check - in a real implementation, you'd do proper control flow analysis
+            // Detect unsafe functions
+            if (line.includes('strcpy(') && !line.includes('strncpy')) {
+                analysis.warnings.push({
+                    type: 'Unsafe Function',
+                    line: lineNum || 0,
+                    message: 'strcpy() used without bounds checking. Consider using strncpy() or strcpy_s().',
+                    lineText: originalLine ? originalLine.trim() : ''
+                });
+            }
+
+            // Detect missing NULL checks (simplified - check next few lines)
+            if (line.match(/(malloc|calloc|realloc)\s*\(/)) {
+                // This is a simplified check - in a real implementation, you'd do proper control flow analysis
+            }
+        } catch (error) {
+            debugError('Error detecting code quality issues:', error);
         }
     }
 
     findLeaks(analysis) {
-        // All remaining allocations are leaks
-        this.allocations.forEach((allocs, varName) => {
-            allocs.forEach(alloc => {
-                let fixMessage = `Add free(${varName}); before function return or at appropriate cleanup point.`;
-                
-                if (alloc.inLoop) {
-                    fixMessage = `Add free(${varName}); inside the loop after use, or collect pointers and free them after the loop.`;
-                } else if (alloc.inFunction && alloc.functionName !== 'main') {
-                    fixMessage = `Memory allocated in ${alloc.functionName}() on line ${alloc.line}. Ensure caller frees this memory, or free it before function return.`;
-                }
+        try {
+            if (!analysis || !analysis.leaks || !Array.isArray(analysis.leaks)) {
+                debugWarn('Invalid analysis object in findLeaks');
+                return;
+            }
 
-                analysis.leaks.push({
-                    var: varName,
-                    line: alloc.line,
-                    function: alloc.function,
-                    size: alloc.size,
-                    inLoop: alloc.inLoop,
-                    fix: fixMessage
+            // All remaining allocations are leaks
+            this.allocations.forEach((allocs, varName) => {
+                if (!allocs || !Array.isArray(allocs)) {
+                    return;
+                }
+                
+                allocs.forEach(alloc => {
+                    if (!alloc) {
+                        return;
+                    }
+
+                    let fixMessage = `Add free(${varName}); before function return or at appropriate cleanup point.`;
+                    
+                    if (alloc.inLoop) {
+                        fixMessage = `Add free(${varName}); inside the loop after use, or collect pointers and free them after the loop.`;
+                    } else if (alloc.inFunction && alloc.functionName && alloc.functionName !== 'main') {
+                        fixMessage = `Memory allocated in ${alloc.functionName}() on line ${alloc.line || 0}. Ensure caller frees this memory, or free it before function return.`;
+                    }
+
+                    analysis.leaks.push({
+                        var: varName || 'unknown',
+                        line: alloc.line || 0,
+                        function: alloc.function || 'unknown',
+                        size: alloc.size || 0,
+                        inLoop: alloc.inLoop || false,
+                        fix: fixMessage
+                    });
                 });
             });
-        });
+        } catch (error) {
+            debugError('Error finding leaks:', error);
+        }
     }
 
     updateTimeline(lineNum) {
-        this.timeline.push({
-            line: lineNum,
-            memory: this.currentMemory
-        });
+        try {
+            if (!this.timeline || !Array.isArray(this.timeline)) {
+                this.timeline = [];
+            }
+            this.timeline.push({
+                line: lineNum || 0,
+                memory: this.currentMemory || 0
+            });
+        } catch (error) {
+            debugError('Error updating timeline:', error);
+        }
     }
 }
 
