@@ -103,6 +103,40 @@ button {
     font-weight: 500;
     position: relative;
     overflow: hidden;
+    min-height: 42px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Action buttons (primary buttons) */
+button.bg-blue-500,
+button.bg-green-500,
+button.bg-red-500,
+button.bg-purple-500,
+button.bg-orange-500,
+button.bg-yellow-500 {
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+}
+
+/* Smaller buttons */
+button.text-sm {
+    min-height: 36px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Icon buttons */
+button[aria-label] {
+    min-width: 44px;
 }
 
 button:focus-visible {
@@ -120,11 +154,28 @@ button:active {
     transform: scale(0.98);
 }
 
+/* Button hover effects */
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+button:active:hover {
+    transform: scale(0.97) translateY(0);
+}
+
 /* ===== Tab Button Styles ===== */
 .tab-btn {
     position: relative;
     transition: var(--transition-base);
     border-bottom: 2px solid transparent;
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tab-btn:hover {
@@ -134,6 +185,7 @@ button:active {
 .tab-btn.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
+    font-weight: 600;
 }
 
 .tab-btn.active::after {
@@ -299,8 +351,17 @@ canvas {
     .flex.gap-2.items-center button {
         flex: 1 1 auto;
         min-width: 100px;
+        min-height: 40px;
         font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
+        padding: 0.625rem 1rem;
+    }
+    
+    .flex.gap-2.items-center button.bg-blue-500,
+    .flex.gap-2.items-center button.bg-green-500,
+    .flex.gap-2.items-center button.bg-red-500,
+    .flex.gap-2.items-center button.bg-purple-500 {
+        min-height: 42px;
+        padding: 0.75rem 1.25rem;
     }
     
     #codeEditor {
@@ -313,8 +374,9 @@ canvas {
     }
     
     .tab-btn {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+        padding: 0.625rem 1rem;
+        min-height: 44px;
         flex: 1;
     }
     
@@ -468,6 +530,16 @@ canvas {
 .dark button:active {
     transform: scale(0.97);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode button:hover,
+.dark button:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode button:active:hover,
+.dark button:active:hover {
+    transform: scale(0.97) translateY(0);
 }
 
 /* Dark mode button focus states */
