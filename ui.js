@@ -40,11 +40,12 @@ function updateDashboard(analysis) {
             criticalIssues: document.getElementById('criticalIssues')
         };
 
-        if (elements.totalAllocations) elements.totalAllocations.textContent = totalAlloc + ' calls';
-        if (elements.totalFrees) elements.totalFrees.textContent = totalFree + ' calls';
-        if (elements.memoryLeaks) elements.memoryLeaks.textContent = leaks + ' leaks';
+        // Update values (numbers only, units are shown separately in HTML)
+        if (elements.totalAllocations) elements.totalAllocations.textContent = totalAlloc;
+        if (elements.totalFrees) elements.totalFrees.textContent = totalFree;
+        if (elements.memoryLeaks) elements.memoryLeaks.textContent = leaks;
         if (elements.leakedBytes) elements.leakedBytes.textContent = formatBytes(leakedBytes);
-        if (elements.criticalIssues) elements.criticalIssues.textContent = critical + ' issues';
+        if (elements.criticalIssues) elements.criticalIssues.textContent = critical;
 
         // Update pie chart
         const allocated = analysis.allocations ? analysis.allocations.reduce((sum, a) => sum + (a.size || 0), 0) : 0;
