@@ -1,43 +1,76 @@
-// AST Parser for improved code analysis
+/**
+ * AST Parser for improved code analysis
+ * Converts source code into an Abstract Syntax Tree (AST) or AST-like structure
+ */
 class ASTParser {
+    /**
+     * Create a new ASTParser instance
+     * @param {string} language - Programming language ('c', 'cpp', 'javascript', etc.)
+     */
     constructor(language = 'c') {
         this.language = language;
     }
 
-    // Parse code into AST-like structure
+    /**
+     * Parse code into AST-like structure
+     * @param {string} code - Source code to parse
+     * @returns {Object} AST object with type, body, and source
+     */
     parse(code) {
-        // Remove comments first
-        const cleanedCode = this.removeComments(code);
-        
-        switch(this.language) {
-            case 'javascript':
-                return this.parseJavaScript(cleanedCode);
-            case 'c':
-            case 'cpp':
-                return this.parseC(cleanedCode);
-            case 'python':
-                return this.parsePython(cleanedCode);
-            case 'java':
-                return this.parseJava(cleanedCode);
-            case 'rust':
-                return this.parseRust(cleanedCode);
-            case 'go':
-                return this.parseGo(cleanedCode);
-            default:
-                return this.parseGeneric(cleanedCode);
+        try {
+            if (!code || typeof code !== 'string') {
+                throw new Error('Invalid code input: code must be a non-empty string');
+            }
+
+            // Remove comments first
+            const cleanedCode = this.removeComments(code);
+            
+            switch(this.language) {
+                case 'javascript':
+                    return this.parseJavaScript(cleanedCode);
+                case 'c':
+                case 'cpp':
+                    return this.parseC(cleanedCode);
+                case 'python':
+                    return this.parsePython(cleanedCode);
+                case 'java':
+                    return this.parseJava(cleanedCode);
+                case 'rust':
+                    return this.parseRust(cleanedCode);
+                case 'go':
+                    return this.parseGo(cleanedCode);
+                default:
+                    return this.parseGeneric(cleanedCode);
+            }
+        } catch (error) {
+            debugError('Error parsing code:', error);
+            throw new Error('Parsing failed: ' + error.message);
         }
     }
 
+    /**
+     * Remove comments from code
+     * @param {string} code - Source code
+     * @returns {string} Code with comments removed
+     */
     removeComments(code) {
-        // Remove single-line comments
-        let cleaned = code.replace(/\/\/.*$/gm, '');
-        // Remove multi-line comments
-        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-        // Remove string literals temporarily to avoid false matches
-        return cleaned;
+        try {
+            // Remove single-line comments
+            let cleaned = code.replace(/\/\/.*$/gm, '');
+            // Remove multi-line comments
+            cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+            return cleaned;
+        } catch (error) {
+            debugError('Error removing comments:', error);
+            return code; // Return original code if comment removal fails
+        }
     }
 
-    // Parse JavaScript using Acorn (if available) or fallback
+    /**
+     * Parse JavaScript using Acorn (if available) or fallback
+     * @param {string} code - JavaScript source code
+     * @returns {Object} AST object
+     */
     parseJavaScript(code) {
         const ast = {
             type: 'Program',
@@ -52,7 +85,7 @@ class ASTParser {
                 return this.convertAcornAST(parsed);
             }
         } catch (e) {
-            console.warn('Acorn parsing failed, using fallback:', e);
+            debugWarn('Acorn parsing failed, using fallback:', e);
         }
 
         // Fallback: parse manually

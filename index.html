@@ -48,7 +48,7 @@
                             <button onclick="loadSampleCode()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
                                 Load Sample
                             </button>
-                            <button onclick="analyzeCode()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                            <button id="analyzeBtn" onclick="analyzeCode()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
                                 Analyze Memory
                             </button>
                             <button onclick="clearEditor()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
@@ -190,6 +190,8 @@
     </div>
 
     <!-- Load modules in correct order -->
+    <script src="config.js"></script>
+    <script src="notifications.js"></script>
     <script src="samples.js"></script>
     <script src="astParser.js"></script>
     <script src="memoryAnalyzer.js"></script>

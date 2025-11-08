@@ -1,3 +1,8 @@
+/**
+ * Sample Code Module
+ * Contains sample code snippets for different programming languages
+ */
+
 // Sample code with memory leaks
 const sampleCode = `#include <stdio.h>
 #include <stdlib.h>
@@ -37,13 +42,24 @@ int main() {
     return 0;
 }`;
 
+/**
+ * Load sample code based on selected language
+ */
 function loadSampleCode() {
-    const language = document.getElementById('languageSelect').value;
-    let sample = '';
-    
-    switch(language) {
-        case 'c':
-            sample = `#include <stdio.h>
+    try {
+        const languageSelect = document.getElementById('languageSelect');
+        if (!languageSelect) {
+            debugError('Language select element not found');
+            notifications.error('Language selector not found');
+            return;
+        }
+
+        const language = languageSelect.value;
+        let sample = '';
+        
+        switch(language) {
+            case 'c':
+                sample = `#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -344,11 +360,22 @@ func main() {
 .unused-class-2 { }
 .unused-class-3 { }
 /* ... thousands of unused classes ... */`;
-            break;
-        default:
-            sample = sampleCode;
+                break;
+            default:
+                sample = sampleCode;
+        }
+        
+        const codeEditor = document.getElementById('codeEditor');
+        if (codeEditor) {
+            codeEditor.value = sample;
+            notifications.success('Sample code loaded successfully');
+        } else {
+            debugError('Code editor element not found');
+            notifications.error('Code editor not found');
+        }
+    } catch (error) {
+        debugError('Error loading sample code:', error);
+        notifications.error('Failed to load sample code: ' + error.message);
     }
-    
-    document.getElementById('codeEditor').value = sample;
 }
 

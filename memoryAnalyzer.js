@@ -1,5 +1,12 @@
-// Comprehensive Memory Leak Detection Engine
+/**
+ * Comprehensive Memory Leak Detection Engine
+ * Analyzes code for memory leaks, allocation/deallocation patterns, and code quality issues
+ */
 class MemoryAnalyzer {
+    /**
+     * Create a new MemoryAnalyzer instance
+     * @param {string} language - Programming language ('c', 'cpp', 'javascript', etc.)
+     */
     constructor(language = 'c') {
         this.language = language;
         this.allocations = new Map(); // varName -> [allocations]
@@ -7,48 +14,81 @@ class MemoryAnalyzer {
         this.warnings = [];
         this.timeline = [];
         this.currentMemory = 0;
-        this.astParser = new ASTParser(language);
+        
+        try {
+            this.astParser = new ASTParser(language);
+        } catch (error) {
+            debugError('Failed to create AST parser:', error);
+            throw new Error('Failed to initialize analyzer: ' + error.message);
+        }
     }
 
+    /**
+     * Analyze code for memory leaks and issues
+     * @param {string} code - Source code to analyze
+     * @returns {Object} Analysis results with allocations, frees, leaks, warnings, and timeline
+     */
     analyze(code) {
-        // Use AST parser for improved accuracy
-        const ast = this.astParser.parse(code);
-        const analysis = {
-            allocations: [],
-            frees: [],
-            leaks: [],
-            warnings: [],
-            timeline: []
-        };
+        if (!code || typeof code !== 'string') {
+            throw new Error('Invalid code input: code must be a non-empty string');
+        }
 
-        // Traverse AST nodes
-        ast.body.forEach(node => {
-            if (node.type === 'Allocation') {
-                const alloc = this.processASTAllocation(node, code);
-                if (alloc) {
-                    this.handleAllocation(alloc, analysis);
-                }
-            } else if (node.type === 'Deallocation') {
-                const free = this.processASTDeallocation(node, code);
-                if (free) {
-                    this.handleFree(free, analysis);
-                }
+        try {
+            // Use AST parser for improved accuracy
+            const ast = this.astParser.parse(code);
+            if (!ast || !ast.body) {
+                throw new Error('AST parsing failed: invalid AST structure');
             }
-            
-            // Update timeline for each node
-            this.updateTimeline(node.line || 1);
-        });
 
-        // Also check for code quality issues using original code
-        const lines = code.split('\n');
-        lines.forEach((line, index) => {
-            this.detectCodeQualityIssues(line, index + 1, line, analysis);
-        });
+            const analysis = {
+                allocations: [],
+                frees: [],
+                leaks: [],
+                warnings: [],
+                timeline: []
+            };
 
-        // Find all leaks
-        this.findLeaks(analysis);
+            // Traverse AST nodes
+            ast.body.forEach(node => {
+                try {
+                    if (node.type === 'Allocation') {
+                        const alloc = this.processASTAllocation(node, code);
+                        if (alloc) {
+                            this.handleAllocation(alloc, analysis);
+                        }
+                    } else if (node.type === 'Deallocation') {
+                        const free = this.processASTDeallocation(node, code);
+                        if (free) {
+                            this.handleFree(free, analysis);
+                        }
+                    }
+                    
+                    // Update timeline for each node
+                    this.updateTimeline(node.line || 1);
+                } catch (error) {
+                    debugError('Error processing AST node:', error);
+                    // Continue processing other nodes
+                }
+            });
 
-        return analysis;
+            // Also check for code quality issues using original code
+            const lines = code.split('\n');
+            lines.forEach((line, index) => {
+                try {
+                    this.detectCodeQualityIssues(line, index + 1, line, analysis);
+                } catch (error) {
+                    debugError('Error detecting code quality issues:', error);
+                }
+            });
+
+            // Find all leaks
+            this.findLeaks(analysis);
+
+            return analysis;
+        } catch (error) {
+            debugError('Analysis error:', error);
+            throw new Error('Analysis failed: ' + error.message);
+        }
     }
 
     // Process AST allocation node into allocation object
@@ -81,7 +121,12 @@ class MemoryAnalyzer {
         };
     }
 
-    // Calculate size from AST node
+    /**
+     * Calculate size from AST node using language-specific constants
+     * @param {Object} astNode - AST node containing allocation information
+     * @param {string} args - Arguments string from the allocation call
+     * @returns {number} Estimated size in bytes
+     */
     calculateSizeFromAST(astNode, args) {
         if (this.language === 'c' || this.language === 'cpp') {
             if (astNode.function === 'calloc') {
@@ -117,26 +162,30 @@ class MemoryAnalyzer {
                     const arrayMatch = args.match(/(\d+)/);
                     if (arrayMatch) {
                         const count = parseInt(arrayMatch[1]) || 1;
-                        return count * 4; // Default type size
+                        return count * CONFIG.TYPE_SIZES.DEFAULT;
                     }
                 } else if (astNode.function === 'new') {
-                    return 4; // Default object size
+                    return CONFIG.TYPE_SIZES.DEFAULT;
                 }
             }
-        } else if (this.language === 'javascript') {
-            if (Array.isArray(astNode.args)) {
-                const size = astNode.args[0] || 1;
-                return (typeof size === 'number' ? size : 1) * 8;
+        } else {
+            // Use language-specific size from config
+            const langSize = CONFIG.LANGUAGE_SIZES[this.language] || CONFIG.TYPE_SIZES.DEFAULT;
+            if (this.language === 'javascript') {
+                if (Array.isArray(astNode.args)) {
+                    const size = astNode.args[0] || 1;
+                    return (typeof size === 'number' ? size : 1) * langSize;
+                }
+                return langSize;
+            } else if (this.language === 'python' || this.language === 'rust' || this.language === 'go') {
+                const sizeArg = Array.isArray(astNode.args) ? astNode.args[0] : (astNode.args || '1');
+                const size = typeof sizeArg === 'number' ? sizeArg : parseInt(sizeArg) || 1;
+                return size * langSize;
+            } else if (this.language === 'java') {
+                const sizeArg = Array.isArray(astNode.args) ? astNode.args[0] : (astNode.args || '1');
+                const size = typeof sizeArg === 'number' ? sizeArg : parseInt(sizeArg) || 1;
+                return size * langSize;
             }
-            return 8;
-        } else if (this.language === 'python' || this.language === 'rust' || this.language === 'go') {
-            const sizeArg = Array.isArray(astNode.args) ? astNode.args[0] : (astNode.args || '1');
-            const size = typeof sizeArg === 'number' ? sizeArg : parseInt(sizeArg) || 1;
-            return size * 8;
-        } else if (this.language === 'java') {
-            const sizeArg = Array.isArray(astNode.args) ? astNode.args[0] : (astNode.args || '1');
-            const size = typeof sizeArg === 'number' ? sizeArg : parseInt(sizeArg) || 1;
-            return size * 4;
         }
         
         return 1;
@@ -148,21 +197,26 @@ class MemoryAnalyzer {
         return lines[lineNum - 1] || '';
     }
 
+    /**
+     * Get type size from sizeof expression or context
+     * @param {string} args - Arguments string containing type information
+     * @returns {number} Type size in bytes
+     */
     getTypeSize(args) {
         const sizeofMatch = args.match(/sizeof\s*\(([^)]+)\)/);
         if (sizeofMatch) {
             const type = sizeofMatch[1].trim();
-            if (type.includes('char')) return 1;
-            if (type.includes('int') || type.includes('float')) return 4;
-            if (type.includes('double') || type.includes('long long')) return 8;
+            if (type.includes('char')) return CONFIG.TYPE_SIZES.CHAR;
+            if (type.includes('int') || type.includes('float')) return CONFIG.TYPE_SIZES.INT;
+            if (type.includes('double') || type.includes('long long')) return CONFIG.TYPE_SIZES.DOUBLE;
         }
         
         // Try to detect from context
-        if (args.includes('char')) return 1;
-        if (args.includes('int') || args.includes('float')) return 4;
-        if (args.includes('double')) return 8;
+        if (args.includes('char')) return CONFIG.TYPE_SIZES.CHAR;
+        if (args.includes('int') || args.includes('float')) return CONFIG.TYPE_SIZES.INT;
+        if (args.includes('double')) return CONFIG.TYPE_SIZES.DOUBLE;
         
-        return 4; // default
+        return CONFIG.TYPE_SIZES.DEFAULT;
     }
 
     handleAllocation(alloc, analysis) {

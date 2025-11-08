@@ -1,141 +1,244 @@
-// UI Update Functions
+/**
+ * UI Update Functions
+ * Handles all UI updates including dashboard, charts, and tabs
+ */
 
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped HTML
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Update dashboard with analysis results
+ * @param {Object} analysis - Analysis results object
+ */
 function updateDashboard(analysis) {
-    const totalAlloc = analysis.allocations.length;
-    const totalFree = analysis.frees.length;
-    const leaks = analysis.leaks.length;
-    const leakedBytes = analysis.leaks.reduce((sum, leak) => sum + leak.size, 0);
-    const critical = analysis.warnings.filter(w => w.type === 'Missing NULL Check' || w.type === 'Double Free').length;
+    try {
+        if (!analysis) {
+            debugError('Invalid analysis object');
+            return;
+        }
 
-    document.getElementById('totalAllocations').textContent = totalAlloc + ' calls';
-    document.getElementById('totalFrees').textContent = totalFree + ' calls';
-    document.getElementById('memoryLeaks').textContent = leaks + ' leaks';
-    document.getElementById('leakedBytes').textContent = formatBytes(leakedBytes);
-    document.getElementById('criticalIssues').textContent = critical + ' issues';
+        const totalAlloc = analysis.allocations ? analysis.allocations.length : 0;
+        const totalFree = analysis.frees ? analysis.frees.length : 0;
+        const leaks = analysis.leaks ? analysis.leaks.length : 0;
+        const leakedBytes = analysis.leaks ? analysis.leaks.reduce((sum, leak) => sum + (leak.size || 0), 0) : 0;
+        const critical = analysis.warnings ? analysis.warnings.filter(w => w.type === 'Missing NULL Check' || w.type === 'Double Free').length : 0;
 
-    // Update pie chart
-    const allocated = analysis.allocations.reduce((sum, a) => sum + a.size, 0);
-    const freed = analysis.frees.reduce((sum, f) => {
-        const alloc = analysis.allocations.find(a => a.allocId === f.freedAllocId);
-        return sum + (alloc ? alloc.size : 0);
-    }, 0);
-    const leaked = leakedBytes;
+        // Update text content safely
+        const elements = {
+            totalAllocations: document.getElementById('totalAllocations'),
+            totalFrees: document.getElementById('totalFrees'),
+            memoryLeaks: document.getElementById('memoryLeaks'),
+            leakedBytes: document.getElementById('leakedBytes'),
+            criticalIssues: document.getElementById('criticalIssues')
+        };
 
-    const ctx = document.getElementById('memoryChart').getContext('2d');
-    if (memoryChart) memoryChart.destroy();
-    
-    memoryChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Allocated', 'Freed', 'Leaked'],
-            datasets: [{
-                data: [allocated, freed, leaked],
-                backgroundColor: ['#3B82F6', '#10B981', '#EF4444'],
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.label + ': ' + formatBytes(context.parsed);
+        if (elements.totalAllocations) elements.totalAllocations.textContent = totalAlloc + ' calls';
+        if (elements.totalFrees) elements.totalFrees.textContent = totalFree + ' calls';
+        if (elements.memoryLeaks) elements.memoryLeaks.textContent = leaks + ' leaks';
+        if (elements.leakedBytes) elements.leakedBytes.textContent = formatBytes(leakedBytes);
+        if (elements.criticalIssues) elements.criticalIssues.textContent = critical + ' issues';
+
+        // Update pie chart
+        const allocated = analysis.allocations ? analysis.allocations.reduce((sum, a) => sum + (a.size || 0), 0) : 0;
+        const freed = analysis.frees ? analysis.frees.reduce((sum, f) => {
+            const alloc = analysis.allocations ? analysis.allocations.find(a => a.allocId === f.freedAllocId) : null;
+            return sum + (alloc ? (alloc.size || 0) : 0);
+        }, 0) : 0;
+        const leaked = leakedBytes;
+
+        const chartCanvas = document.getElementById('memoryChart');
+        if (!chartCanvas) {
+            debugError('Memory chart canvas not found');
+            return;
+        }
+
+        const ctx = chartCanvas.getContext('2d');
+        if (!ctx) {
+            debugError('Could not get 2d context for memory chart');
+            return;
+        }
+
+        if (memoryChart) {
+            memoryChart.destroy();
+        }
+        
+        memoryChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Allocated', 'Freed', 'Leaked'],
+                datasets: [{
+                    data: [allocated, freed, leaked],
+                    backgroundColor: [
+                        CONFIG.CHART_COLORS.ALLOCATED,
+                        CONFIG.CHART_COLORS.FREED,
+                        CONFIG.CHART_COLORS.LEAKED
+                    ],
+                    borderWidth: 2,
+                    borderColor: CONFIG.CHART_COLORS.BORDER
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + formatBytes(context.parsed);
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-}
-
-function updateLeaksTab(analysis) {
-    const leaksList = document.getElementById('leaksList');
-    if (analysis.leaks.length === 0) {
-        leaksList.innerHTML = '<p class="text-green-600 text-center py-8 font-semibold">✓ No memory leaks detected!</p>';
-        return;
+        });
+    } catch (error) {
+        debugError('Error updating dashboard:', error);
+        notifications.error('Failed to update dashboard: ' + error.message);
     }
-
-    leaksList.innerHTML = analysis.leaks.map(leak => `
-        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">${leak.var}</code></h4>
-                    <p class="text-sm text-gray-600 mt-1">Line ${leak.line} | Function: ${leak.function}() | Size: ${formatBytes(leak.size)}</p>
-                </div>
-            </div>
-            <div class="mt-3 bg-white p-3 rounded border border-red-200">
-                <p class="text-sm font-semibold text-gray-700 mb-1">Fix/Solution:</p>
-                <p class="text-sm text-gray-800">${leak.fix}</p>
-            </div>
-        </div>
-    `).join('');
 }
 
-function updateAnalysisTab(analysis) {
-    const analysisContent = document.getElementById('analysisContent');
-    const balanceStatus = analysis.allocations.length === analysis.frees.length ? 'Balanced' : 'Unbalanced';
-    const balanceColor = balanceStatus === 'Balanced' ? 'green' : 'red';
+/**
+ * Update memory leaks tab with analysis results
+ * @param {Object} analysis - Analysis results object
+ */
+function updateLeaksTab(analysis) {
+    try {
+        const leaksList = document.getElementById('leaksList');
+        if (!leaksList) {
+            debugError('Leaks list element not found');
+            return;
+        }
 
-    let html = `
-        <div class="space-y-6">
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <h4 class="font-semibold text-gray-800 mb-3">Memory Allocation Analysis</h4>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-blue-600">${analysis.allocations.length}</p>
-                        <p class="text-sm text-gray-600">malloc/calloc/realloc calls</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-green-600">${analysis.frees.length}</p>
-                        <p class="text-sm text-gray-600">free() calls</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-2xl font-bold text-${balanceColor}-600">${balanceStatus}</p>
-                        <p class="text-sm text-gray-600">Memory Balance</p>
-                    </div>
-                </div>
-            </div>
+        if (!analysis.leaks || analysis.leaks.length === 0) {
+            leaksList.innerHTML = '<p class="text-green-600 text-center py-8 font-semibold">✓ No memory leaks detected!</p>';
+            return;
+        }
 
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
-                <h4 class="font-semibold text-yellow-800 mb-3">Code Quality Warnings (${analysis.warnings.length})</h4>
-    `;
-
-    if (analysis.warnings.length === 0) {
-        html += '<p class="text-green-600">✓ No warnings detected!</p>';
-    } else {
-        html += '<div class="space-y-3">';
-        analysis.warnings.forEach(warning => {
-            html += `
-                <div class="bg-white p-3 rounded border border-yellow-200">
-                    <p class="font-semibold text-gray-800">${warning.type} (Line ${warning.line})</p>
-                    <p class="text-sm text-gray-700 mt-1">${warning.message}</p>
-                    <code class="text-xs bg-gray-100 px-2 py-1 rounded block mt-2">${warning.lineText}</code>
+        // Use textContent for safety, but we need HTML for formatting
+        // So we'll escape user content
+        leaksList.innerHTML = analysis.leaks.map(leak => {
+            const varName = escapeHtml(leak.var || 'unknown');
+            const line = leak.line || 0;
+            const func = escapeHtml(leak.function || 'unknown');
+            const size = formatBytes(leak.size || 0);
+            const fix = escapeHtml(leak.fix || 'No fix available');
+            
+            return `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold text-red-800">Variable: <code class="bg-red-100 px-2 py-1 rounded">${varName}</code></h4>
+                            <p class="text-sm text-gray-600 mt-1">Line ${line} | Function: ${func}() | Size: ${size}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 bg-white p-3 rounded border border-red-200">
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Fix/Solution:</p>
+                        <p class="text-sm text-gray-800">${fix}</p>
+                    </div>
                 </div>
             `;
-        });
-        html += '</div>';
+        }).join('');
+    } catch (error) {
+        debugError('Error updating leaks tab:', error);
+        notifications.error('Failed to update leaks tab: ' + error.message);
     }
-
-    html += `
-            </div>
-        </div>
-    `;
-
-    analysisContent.innerHTML = html;
 }
 
-function updateTimelineChart(analysis) {
-    const canvas = document.getElementById('timelineChart');
-    if (!canvas) {
-        console.error('Timeline chart canvas not found');
-        return;
+/**
+ * Update code analysis tab with analysis results
+ * @param {Object} analysis - Analysis results object
+ */
+function updateAnalysisTab(analysis) {
+    try {
+        const analysisContent = document.getElementById('analysisContent');
+        if (!analysisContent) {
+            debugError('Analysis content element not found');
+            return;
+        }
+
+        const allocCount = analysis.allocations ? analysis.allocations.length : 0;
+        const freeCount = analysis.frees ? analysis.frees.length : 0;
+        const warningCount = analysis.warnings ? analysis.warnings.length : 0;
+        const balanceStatus = allocCount === freeCount ? 'Balanced' : 'Unbalanced';
+        const balanceColor = balanceStatus === 'Balanced' ? 'green' : 'red';
+
+        let html = `
+            <div class="space-y-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3">Memory Allocation Analysis</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-blue-600">${allocCount}</p>
+                            <p class="text-sm text-gray-600">malloc/calloc/realloc calls</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-green-600">${freeCount}</p>
+                            <p class="text-sm text-gray-600">free() calls</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-${balanceColor}-600">${balanceStatus}</p>
+                            <p class="text-sm text-gray-600">Memory Balance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+                    <h4 class="font-semibold text-yellow-800 mb-3">Code Quality Warnings (${warningCount})</h4>
+        `;
+
+        if (warningCount === 0) {
+            html += '<p class="text-green-600">✓ No warnings detected!</p>';
+        } else {
+            html += '<div class="space-y-3">';
+            analysis.warnings.forEach(warning => {
+                const type = escapeHtml(warning.type || 'Unknown');
+                const line = warning.line || 0;
+                const message = escapeHtml(warning.message || 'No message');
+                const lineText = escapeHtml(warning.lineText || '');
+                
+                html += '<div class="bg-white p-3 rounded border border-yellow-200">' +
+                    '<p class="font-semibold text-gray-800">' + type + ' (Line ' + line + ')</p>' +
+                    '<p class="text-sm text-gray-700 mt-1">' + message + '</p>' +
+                    '<code class="text-xs bg-gray-100 px-2 py-1 rounded block mt-2">' + lineText + '</code>' +
+                    '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        analysisContent.innerHTML = html;
+    } catch (error) {
+        debugError('Error updating analysis tab:', error);
+        notifications.error('Failed to update analysis tab: ' + error.message);
     }
+}
+
+/**
+ * Update memory timeline chart
+ * @param {Object} analysis - Analysis results object
+ */
+function updateTimelineChart(analysis) {
+    try {
+        const canvas = document.getElementById('timelineChart');
+        if (!canvas) {
+            debugError('Timeline chart canvas not found');
+            return;
+        }
 
     // Remove any existing messages
     const timelineTab = document.getElementById('timeline-tab');
@@ -166,120 +269,159 @@ function updateTimelineChart(analysis) {
     const labels = analysis.timeline.map(t => `Line ${t.line}`);
     const data = analysis.timeline.map(t => t.memory);
 
-    // Use setTimeout to ensure canvas is visible before rendering
-    setTimeout(() => {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            console.error('Could not get 2d context');
-            return;
-        }
+        // Use setTimeout to ensure canvas is visible before rendering
+        setTimeout(() => {
+            try {
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    debugError('Could not get 2d context for timeline chart');
+                    return;
+                }
 
-        timelineChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Memory Usage (Bytes)',
-                    data: data,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Memory (Bytes)'
-                        }
+                if (timelineChart) {
+                    timelineChart.destroy();
+                }
+
+                timelineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Memory Usage (Bytes)',
+                            data: data,
+                            borderColor: CONFIG.CHART_COLORS.ALLOCATED,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
                     },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Code Execution Line'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Memory (Bytes)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Code Execution Line'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
                         },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return 'Memory: ' + formatBytes(context.parsed.y);
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Memory: ' + formatBytes(context.parsed.y);
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                });
+            } catch (error) {
+                debugError('Error creating timeline chart:', error);
+                notifications.error('Failed to create timeline chart: ' + error.message);
             }
-        });
-    }, 100);
+        }, CONFIG.UI.CHART_DELAY);
+    } catch (error) {
+        debugError('Error updating timeline chart:', error);
+        notifications.error('Failed to update timeline chart: ' + error.message);
+    }
 }
 
+/**
+ * Switch between tabs
+ * @param {string} tabName - Name of the tab to switch to
+ */
 function switchTab(tabName) {
-    console.log('Switching to tab:', tabName);
-    
-    // Hide all tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Reset all buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-        btn.classList.add('text-gray-500');
-    });
-
-    // Show selected tab
-    const tabElement = document.getElementById(`${tabName}-tab`);
-    if (tabElement) {
-        tabElement.classList.add('active');
-        console.log('Tab element found and activated:', tabElement.id);
-    } else {
-        console.error('Tab element not found:', `${tabName}-tab`);
-    }
-
-    // Update button styles - find button by data-tab attribute
-    const buttons = document.querySelectorAll('.tab-btn');
-    buttons.forEach(btn => {
-        if (btn.getAttribute('data-tab') === tabName) {
-            btn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-            btn.classList.remove('text-gray-500');
+    try {
+        debugLog('Switching to tab:', tabName);
+        
+        if (!tabName) {
+            debugWarn('No tab name provided');
+            return;
         }
-    });
-
-    // If switching to timeline and analysis exists, ensure chart is updated
-    if (tabName === 'timeline') {
-        if (currentAnalysis) {
-            // Small delay to ensure tab is visible before rendering chart
-            setTimeout(() => {
-                updateTimelineChart(currentAnalysis);
-            }, 100);
+        
+        // Hide all tabs
+        const tabContents = document.querySelectorAll('.tab-content');
+        if (tabContents.length === 0) {
+            debugWarn('No tab content elements found');
         } else {
-            // Show message if no analysis
-            const canvas = document.getElementById('timelineChart');
-            if (canvas && canvas.parentElement) {
-                const existingMsg = canvas.parentElement.querySelector('.no-timeline-msg');
-                if (!existingMsg) {
-                    const msg = document.createElement('p');
-                    msg.className = 'no-timeline-msg text-gray-500 text-center py-8';
-                    msg.textContent = 'No analysis performed yet. Click "Analyze Memory" to start.';
-                    canvas.parentElement.insertBefore(msg, canvas);
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+        }
+        
+        // Reset all buttons
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        if (tabButtons.length === 0) {
+            debugWarn('No tab buttons found');
+        } else {
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-500');
+            });
+        }
+
+        // Show selected tab
+        const tabElement = document.getElementById(`${tabName}-tab`);
+        if (tabElement) {
+            tabElement.classList.add('active');
+            debugLog('Tab element found and activated:', tabElement.id);
+        } else {
+            debugError('Tab element not found:', `${tabName}-tab`);
+            notifications.warning(`Tab "${tabName}" not found`);
+            return;
+        }
+
+        // Update button styles - find button by data-tab attribute
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabName) {
+                btn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.remove('text-gray-500');
+            }
+        });
+
+        // If switching to timeline and analysis exists, ensure chart is updated
+        if (tabName === 'timeline') {
+            if (currentAnalysis) {
+                // Small delay to ensure tab is visible before rendering chart
+                setTimeout(() => {
+                    updateTimelineChart(currentAnalysis);
+                }, CONFIG.UI.CHART_DELAY);
+            } else {
+                // Show message if no analysis
+                const canvas = document.getElementById('timelineChart');
+                if (canvas && canvas.parentElement) {
+                    const existingMsg = canvas.parentElement.querySelector('.no-timeline-msg');
+                    if (!existingMsg) {
+                        const msg = document.createElement('p');
+                        msg.className = 'no-timeline-msg text-gray-500 text-center py-8';
+                        msg.textContent = 'No analysis performed yet. Click "Analyze Memory" to start.';
+                        canvas.parentElement.insertBefore(msg, canvas);
+                    }
                 }
             }
         }
+    } catch (error) {
+        debugError('Error switching tab:', error);
+        notifications.error('Failed to switch tab: ' + error.message);
     }
 }
 
