@@ -1,6 +1,7 @@
 let memoryChart = null;
 let timelineChart = null;
 let currentAnalysis = null;
+let selectedLanguage = 'c'; // Default language
 
 // Sample code with memory leaks
 const sampleCode = `#include <stdio.h>
@@ -42,7 +43,98 @@ int main() {
 }`;
 
 function loadSampleCode() {
-    document.getElementById('codeEditor').value = sampleCode;
+    const language = document.getElementById('languageSelect').value;
+    let sample = '';
+    
+    switch(language) {
+        case 'c':
+        case 'cpp':
+            sample = sampleCode; // Use existing C/C++ sample
+            break;
+        case 'javascript':
+            sample = `// JavaScript Memory Leak Example
+function createLeak() {
+    const arr = new Array(1000).fill(0);
+    // Memory leak: arr is not cleared
+    return arr;
+}
+
+function processData() {
+    const buffer = new ArrayBuffer(1024);
+    // Memory leak: buffer is not released
+}
+
+createLeak();
+processData();`;
+            break;
+        case 'python':
+            sample = `# Python Memory Leak Example
+import sys
+
+def create_leak():
+    data = [0] * 1000
+    # Memory leak: data is not cleared
+    return data
+
+def process_data():
+    buffer = bytearray(1024)
+    # Memory leak: buffer is not released
+    pass
+
+create_leak()
+process_data()`;
+            break;
+        case 'java':
+            sample = `// Java Memory Leak Example
+public class MemoryLeak {
+    public static void createLeak() {
+        int[] arr = new int[1000];
+        // Memory leak: arr is not cleared
+    }
+    
+    public static void processData() {
+        byte[] buffer = new byte[1024];
+        // Memory leak: buffer is not released
+    }
+}`;
+            break;
+        case 'rust':
+            sample = `// Rust Memory Leak Example
+fn create_leak() {
+    let vec = vec![0; 1000];
+    // Memory leak: vec is not dropped
+}
+
+fn process_data() {
+    let buffer = vec![0u8; 1024];
+    // Memory leak: buffer is not released
+}`;
+            break;
+        case 'go':
+            sample = `// Go Memory Leak Example
+package main
+
+func createLeak() {
+    arr := make([]int, 1000)
+    // Memory leak: arr is not cleared
+}
+
+func processData() {
+    buffer := make([]byte, 1024)
+    // Memory leak: buffer is not released
+}`;
+            break;
+        default:
+            sample = sampleCode;
+    }
+    
+    document.getElementById('codeEditor').value = sample;
+}
+
+function updateLanguage() {
+    selectedLanguage = document.getElementById('languageSelect').value;
+    // Update analysis patterns based on language if needed
+    console.log('Language changed to:', selectedLanguage);
 }
 
 function clearEditor() {
@@ -815,6 +907,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Set up language selector
+    const languageSelect = document.getElementById('languageSelect');
+    if (languageSelect) {
+        languageSelect.addEventListener('change', updateLanguage);
+        selectedLanguage = languageSelect.value;
+    }
     
     // Make switchTab available globally for debugging
     window.switchTab = switchTab;

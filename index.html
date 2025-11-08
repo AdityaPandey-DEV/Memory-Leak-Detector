@@ -27,7 +27,22 @@
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-semibold text-gray-800">Code Editor</h2>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 items-center">
+                            <div class="flex items-center gap-2">
+                                <label for="languageSelect" class="text-sm font-medium text-gray-700">Language:</label>
+                                <select id="languageSelect" class="bg-white border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                                    <option value="c">C</option>
+                                    <option value="cpp">C++</option>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="python">Python</option>
+                                    <option value="java">Java</option>
+                                    <option value="rust">Rust</option>
+                                    <option value="go">Go</option>
+                                    <option value="html">HTML</option>
+                                    <option value="css">CSS</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
                             <button onclick="loadSampleCode()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
                                 Load Sample
                             </button>
