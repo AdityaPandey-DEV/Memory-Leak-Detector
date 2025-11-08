@@ -392,11 +392,8 @@ class ASTParser {
                 // Reset statement tracking
                 currentStatement = '';
                 statementStartLine = 0;
-                continue;
-            }
-            
-            // Parse allocations (only if not in multi-line statement)
-            if (!inStatement) {
+            } else {
+                // Parse allocations (only if not in multi-line statement)
                 const alloc = this.parseCAllocation(trimmed, lineNum, line, currentFunction, inLoop);
                 if (alloc) {
                     nodes.push(alloc);
