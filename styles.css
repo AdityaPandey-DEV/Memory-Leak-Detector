@@ -185,24 +185,17 @@
     overflow: hidden;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: currentColor;
-    transition: width 0.3s ease;
-}
-
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card:hover::before {
-    width: 6px;
+.stat-card svg {
+    transition: var(--transition-base);
+}
+
+.stat-card:hover svg {
+    transform: scale(1.1);
 }
 
 /* ===== Button Styles ===== */
@@ -348,34 +341,39 @@ button:active:hover {
 .tab-btn {
     position: relative;
     transition: var(--transition-base);
-    border-bottom: 2px solid transparent;
-    min-height: 48px;
-    padding: 0.75rem 1.5rem;
+    border-bottom: 3px solid transparent;
+    min-height: 52px;
+    padding: 0.875rem 1.75rem;
     font-size: 0.9375rem;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    color: #6B7280;
+    margin-bottom: -1px;
 }
 
 .tab-btn:hover {
-    background-color: rgba(59, 130, 246, 0.05);
+    background-color: rgba(59, 130, 246, 0.08);
+    color: #4B5563;
 }
 
 .tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+    color: #4F46E5;
+    border-bottom-color: #4F46E5;
     font-weight: 600;
+    background-color: transparent;
 }
 
 .tab-btn.active::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: -3px;
     left: 0;
     right: 0;
-    height: 2px;
-    background-color: var(--primary-color);
+    height: 3px;
+    background-color: #4F46E5;
+    border-radius: 3px 3px 0 0;
     animation: slideIn 0.3s ease-out;
 }
 
@@ -853,8 +851,13 @@ canvas {
 
 .dark-mode .tab-btn.active,
 .dark .tab-btn.active {
-    color: #60A5FA;
-    border-bottom-color: #60A5FA;
+    color: #818CF8;
+    border-bottom-color: #818CF8;
+}
+
+.dark-mode .tab-btn.active::after,
+.dark .tab-btn.active::after {
+    background-color: #818CF8;
 }
 
 /* Dark mode general styles */
