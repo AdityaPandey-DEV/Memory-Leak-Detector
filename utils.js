@@ -25,7 +25,20 @@ function performAnalysis(code, language = 'c') {
         return analysis;
     } catch (error) {
         debugError('Error in performAnalysis:', error);
-        throw error;
+        // Return empty analysis instead of throwing
+        // This allows the UI to display results (even if empty) instead of an error
+        return {
+            allocations: [],
+            frees: [],
+            leaks: [],
+            warnings: [{
+                type: 'Analysis Error',
+                line: 0,
+                message: 'Analysis failed: ' + error.message + '. Please check your code for syntax errors.',
+                lineText: ''
+            }],
+            timeline: []
+        };
     }
 }
 

@@ -36,10 +36,10 @@ class MemoryAnalyzer {
         try {
             // Use AST parser for improved accuracy
             const ast = this.astParser.parse(code);
-            if (!ast || !ast.body) {
-                throw new Error('AST parsing failed: invalid AST structure');
-            }
-
+            
+            // Ensure we have a valid AST structure (even if empty)
+            const astBody = (ast && ast.body && Array.isArray(ast.body)) ? ast.body : [];
+            
             const analysis = {
                 allocations: [],
                 frees: [],
@@ -48,8 +48,14 @@ class MemoryAnalyzer {
                 timeline: []
             };
 
+            // If AST is empty, it might be due to syntax errors - continue with empty results
+            if (astBody.length === 0) {
+                debugWarn('AST is empty - code may have syntax errors or no allocations detected');
+                // Still check for code quality issues even with empty AST
+            }
+
             // Traverse AST nodes
-            ast.body.forEach(node => {
+            astBody.forEach(node => {
                 try {
                     if (node.type === 'Allocation') {
                         const alloc = this.processASTAllocation(node, code);
@@ -87,7 +93,25 @@ class MemoryAnalyzer {
             return analysis;
         } catch (error) {
             debugError('Analysis error:', error);
-            throw new Error('Analysis failed: ' + error.message);
+            // Instead of throwing, return empty analysis with a warning
+            // This allows the UI to show that analysis completed (with no results)
+            // rather than showing an error
+            const emptyAnalysis = {
+                allocations: [],
+                frees: [],
+                leaks: [],
+                warnings: [{
+                    type: 'Analysis Error',
+                    line: 0,
+                    message: 'Analysis encountered an error: ' + error.message + '. Some results may be incomplete.',
+                    lineText: ''
+                }],
+                timeline: []
+            };
+            
+            // Log the error but return empty results instead of throwing
+            debugError('Returning empty analysis due to error:', error);
+            return emptyAnalysis;
         }
     }
 
